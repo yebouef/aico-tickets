@@ -1,0 +1,1758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AICO Ticket Sales</title>
+<style>
+  :root {
+    --bg: #f5f7fb;
+    --card: #ffffff;
+    --ink: #0f172a;
+    --ink-soft: #475569;
+    --line: #e2e8f0;
+    --accent: #1d4ed8;
+    --accent-soft: #dbeafe;
+    --good: #047857;
+    --good-soft: #d1fae5;
+    --warn: #b45309;
+    --warn-soft: #fef3c7;
+    --bad: #b91c1c;
+    --bad-soft: #fee2e2;
+    --shadow: 0 1px 2px rgba(15,23,42,.04), 0 4px 16px rgba(15,23,42,.06);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+  header.page {
+    background: linear-gradient(135deg, #1e3a8a, #1d4ed8);
+    color: #fff;
+    padding: 22px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  header.page .titles h1 {
+    margin: 0 0 4px 0;
+    font-size: 22px;
+    letter-spacing: .2px;
+  }
+  header.page .titles p {
+    margin: 0;
+    opacity: .85;
+    font-size: 13px;
+  }
+  .header-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .conn-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,.15);
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .conn-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 0 0 rgba(16,185,129,.6);
+    animation: pulse 2s infinite;
+  }
+  .conn-status.offline .conn-dot { background: #f59e0b; animation: none; }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(16,185,129,.6); }
+    70% { box-shadow: 0 0 0 6px rgba(16,185,129,0); }
+    100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+  }
+  .user-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,.15);
+    border-radius: 999px;
+    padding: 4px 4px 4px 14px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .user-pill .who { white-space: nowrap; }
+  .user-pill button {
+    background: rgba(255,255,255,.9);
+    color: var(--accent);
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+  }
+  .user-pill button:hover { background: #fff; }
+
+  .tabs {
+    display: inline-flex;
+    background: rgba(255,255,255,.12);
+    padding: 4px;
+    border-radius: 10px;
+    gap: 2px;
+  }
+  .tab {
+    background: transparent;
+    color: rgba(255,255,255,.85);
+    padding: 8px 14px;
+    border-radius: 7px;
+    font-weight: 600;
+    font-size: 13px;
+    border: none;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .tab:hover { color: #fff; }
+  .tab.active { background: #fff; color: var(--accent); }
+
+  .lang-switch {
+    display: inline-flex;
+    background: rgba(255,255,255,.12);
+    padding: 4px;
+    border-radius: 10px;
+    gap: 2px;
+  }
+  .lang-btn {
+    background: transparent;
+    color: rgba(255,255,255,.85);
+    padding: 6px 12px;
+    border-radius: 7px;
+    font-weight: 700;
+    font-size: 12px;
+    border: none;
+    cursor: pointer;
+    letter-spacing: .5px;
+  }
+  .lang-btn:hover { color: #fff; }
+  .lang-btn.active { background: #fff; color: var(--accent); }
+
+  .container {
+    max-width: 1200px;
+    margin: 24px auto;
+    padding: 0 20px 80px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .view { display: none; }
+  .view.active { display: grid; gap: 20px; }
+
+  #view-login.active { justify-items: center; }
+  #view-login .login-card {
+    max-width: 420px;
+    width: 100%;
+    margin-top: 40px;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: var(--shadow);
+  }
+  .card h2 {
+    margin: 0 0 14px 0;
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    color: var(--ink-soft);
+  }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 14px; }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+  }
+  input[type="text"], input[type="number"], input[type="date"], input[type="password"], select {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-size: 14px;
+    background: #fff;
+    color: var(--ink);
+    transition: border-color .15s, box-shadow .15s;
+  }
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  .locked-field {
+    padding: 9px 10px;
+    background: #f1f5f9;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    font-size: 14px;
+    color: var(--ink);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .locked-field::before {
+    content: "🔒";
+    font-size: 12px;
+    opacity: .6;
+  }
+
+  button {
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s, transform .05s;
+  }
+  button:active { transform: translateY(1px); }
+  button:disabled { opacity: .55; cursor: not-allowed; }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover:not(:disabled) { background: #1e40af; }
+  .btn-secondary { background: #fff; color: var(--accent); border: 1px solid var(--accent); }
+  .btn-secondary:hover:not(:disabled) { background: var(--accent-soft); }
+  .btn-ghost { background: transparent; color: var(--ink-soft); padding: 6px 10px; font-size: 12px; }
+  .btn-ghost:hover:not(:disabled) { color: var(--bad); }
+  .btn-danger { background: #fff; color: var(--bad); border: 1px solid var(--bad-soft); }
+  .btn-danger:hover:not(:disabled) { background: var(--bad-soft); }
+
+  .line-item {
+    display: grid;
+    grid-template-columns: 2fr 100px 110px 36px;
+    gap: 10px;
+    align-items: end;
+    padding: 12px;
+    background: #f8fafc;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    margin-bottom: 8px;
+  }
+  .line-item .subtotal {
+    padding: 9px 10px;
+    font-weight: 600;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    text-align: right;
+  }
+  .remove-btn {
+    background: transparent;
+    color: var(--bad);
+    font-size: 18px;
+    padding: 6px;
+    line-height: 1;
+  }
+  .totals {
+    margin-top: 14px;
+    padding: 14px 16px;
+    background: #f1f5f9;
+    border-radius: 10px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  .totals .stat { text-align: center; }
+  .totals .stat .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    letter-spacing: .5px;
+    margin-bottom: 4px;
+  }
+  .totals .stat .value { font-size: 20px; font-weight: 700; }
+  .balance-paid { color: var(--good); }
+  .balance-due  { color: var(--bad); }
+  .balance-zero { color: var(--ink-soft); }
+  .form-actions {
+    margin-top: 16px;
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .kpi {
+    background: #f8fafc;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px;
+  }
+  .kpi .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+  .kpi .value { font-size: 22px; font-weight: 700; }
+  .kpi .sub { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+  .inv-bar-wrap {
+    margin-top: 8px;
+    background: var(--line);
+    border-radius: 999px;
+    height: 8px;
+    overflow: hidden;
+  }
+  .inv-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), #3b82f6);
+    transition: width .3s;
+  }
+
+  .seller-row {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 12px;
+    background: #f8fafc;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    margin-bottom: 6px;
+  }
+  .seller-row .name { font-weight: 600; }
+  .seller-row .pwd {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .seller-add {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr auto;
+    gap: 10px;
+    align-items: end;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--line);
+  }
+
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .toolbar input[type="text"] { max-width: 280px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    text-align: left;
+    background: #f8fafc;
+    padding: 10px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--ink-soft);
+    border-bottom: 1px solid var(--line);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  tbody td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tbody tr:hover { background: #f8fafc; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .badge.adult-m { background: #dbeafe; color: #1e40af; }
+  .badge.adult-n { background: #ede9fe; color: #5b21b6; }
+  .badge.child-m { background: var(--good-soft); color: var(--good); }
+  .badge.child-n { background: var(--warn-soft); color: var(--warn); }
+
+  .empty {
+    text-align: center;
+    padding: 30px;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+  .pill {
+    display: inline-block;
+    padding: 2px 8px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--good);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.15);
+    font-weight: 600;
+    opacity: 0;
+    transition: opacity .25s, transform .25s;
+    pointer-events: none;
+    z-index: 1000;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  .toast.error { background: var(--bad); }
+
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15,23,42,.55);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: 20px;
+  }
+  .modal-backdrop.show { display: flex; }
+  .modal {
+    background: white;
+    border-radius: 14px;
+    padding: 24px;
+    max-width: 380px;
+    width: 100%;
+    box-shadow: 0 16px 48px rgba(0,0,0,.2);
+  }
+  .modal h3 { margin: 0 0 8px 0; font-size: 18px; }
+  .modal p { margin: 0 0 14px 0; color: var(--ink-soft); font-size: 14px; }
+  .modal input[type="password"] {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 16px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+  .modal input[type="password"]:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  .pw-error {
+    color: var(--bad);
+    font-size: 13px;
+    margin-top: 8px;
+    font-weight: 600;
+  }
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .lock-btn {
+    background: #fff;
+    color: var(--ink-soft);
+    border: 1px solid var(--line);
+    padding: 6px 12px;
+    font-size: 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    margin-left: auto;
+  }
+  .lock-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+  .login-error {
+    color: var(--bad);
+    font-size: 13px;
+    margin-top: 10px;
+    font-weight: 600;
+    display: none;
+  }
+  .login-error.show { display: block; }
+  .help-text {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 6px;
+  }
+
+  /* Loading splash */
+  #splash {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(135deg, #1e3a8a, #1d4ed8);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 5000;
+    transition: opacity .3s;
+  }
+  #splash.hidden { opacity: 0; pointer-events: none; }
+  #splash h1 {
+    margin: 0 0 6px 0;
+    font-size: 24px;
+    letter-spacing: .3px;
+  }
+  #splash p {
+    margin: 0;
+    opacity: .85;
+    font-size: 13px;
+  }
+  .spinner {
+    width: 38px;
+    height: 38px;
+    border: 3px solid rgba(255,255,255,.25);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+    margin-bottom: 18px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 880px) {
+    .grid-3, .grid-4, .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .line-item { grid-template-columns: 1fr 80px 100px 36px; }
+    .totals { grid-template-columns: 1fr; }
+    .seller-row, .seller-add { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div id="splash">
+  <div class="spinner"></div>
+  <h1>AICO Ticket Sales</h1>
+  <p id="splash-msg">Connecting to the cloud...</p>
+</div>
+
+<header class="page">
+  <div class="titles">
+    <h1 data-i18n="appTitle">AICO Ticket Sales</h1>
+    <p data-i18n="appSubtitle">Live, multi-device ticket sales tracking.</p>
+  </div>
+  <div class="header-controls">
+    <div class="conn-status" id="conn-status" title="">
+      <span class="conn-dot"></span>
+      <span id="conn-text" data-i18n="online">Online</span>
+    </div>
+    <div class="user-pill" id="user-pill" style="display:none;">
+      <span class="who" id="user-name"></span>
+      <button id="logout-btn" data-i18n="signOut">Sign out</button>
+    </div>
+    <div class="tabs" id="tabs" role="tablist" style="display:none;">
+      <button class="tab active" data-view="sales" data-i18n="tabSales">Sales Entry</button>
+      <button class="tab" data-view="dashboard" data-i18n="tabDashboard">Dashboard</button>
+    </div>
+    <div class="lang-switch" role="tablist">
+      <button class="lang-btn active" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="fr">FR</button>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- ============ LOGIN VIEW ============ -->
+  <section class="view active" id="view-login">
+    <div class="card login-card">
+      <h2 data-i18n="signInTitle">Sign in</h2>
+      <p style="margin: -8px 0 16px 0; color: var(--ink-soft); font-size: 13px;" data-i18n="signInSubtitle">
+        Select your name and enter your password.
+      </p>
+      <div style="margin-bottom: 12px;">
+        <label for="login-name" data-i18n="yourName">Your name</label>
+        <select id="login-name"></select>
+      </div>
+      <div>
+        <label for="login-password" data-i18n="passwordLabel">Password</label>
+        <input type="password" id="login-password" autocomplete="off" />
+      </div>
+      <div class="login-error" id="login-error" data-i18n="loginError">Wrong name or password.</div>
+      <div class="form-actions" style="justify-content: stretch;">
+        <button type="button" class="btn-primary" id="login-btn" style="width:100%;" data-i18n="signIn">Sign in</button>
+      </div>
+      <p class="help-text" id="login-help" data-i18n="loginHelp">
+        No sellers yet? Sign in as Admin (password AICO2026) to add them.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ SALES ENTRY VIEW ============ -->
+  <section class="view" id="view-sales">
+
+    <div class="card">
+      <h2 data-i18n="recordNewSale">Record New Sale</h2>
+      <form id="sale-form" autocomplete="off">
+
+        <div class="grid-4">
+          <div>
+            <label for="buyer-name" data-i18n="buyerName">Buyer name</label>
+            <input type="text" id="buyer-name" required />
+          </div>
+          <div>
+            <label data-i18n="dateOfSale">Date of sale</label>
+            <div class="locked-field" id="locked-date">—</div>
+          </div>
+          <div>
+            <label data-i18n="sellerName">Seller name</label>
+            <div class="locked-field" id="locked-seller">—</div>
+          </div>
+          <div>
+            <label for="payment-method" data-i18n="paymentMethod">Payment method</label>
+            <select id="payment-method" required>
+              <option value="" data-i18n="selectPlaceholder">Select...</option>
+              <option value="Cash" data-i18n="payCash">Cash</option>
+              <option value="Zelle">Zelle</option>
+              <option value="Other" data-i18n="payOther">Other</option>
+            </select>
+            <input type="text" id="payment-other" style="display:none; margin-top:8px;" data-i18n-placeholder="payOtherPlaceholder" placeholder="Specify other method..." />
+          </div>
+        </div>
+
+        <div style="margin-top:18px;">
+          <label data-i18n="lineItems">Line items</label>
+          <div id="line-items"></div>
+          <button type="button" class="btn-secondary" id="add-line-btn" data-i18n="addLineItem">+ Add line item</button>
+        </div>
+
+        <div class="grid-2" style="margin-top:18px;">
+          <div>
+            <label for="amount-received" data-i18n="amountReceivedLabel">Amount received ($)</label>
+            <input type="number" id="amount-received" min="0" step="0.01" value="0" />
+          </div>
+          <div>
+            <label for="notes" data-i18n="notesLabel">Notes (optional)</label>
+            <input type="text" id="notes" />
+          </div>
+        </div>
+
+        <div class="totals">
+          <div class="stat">
+            <div class="label" data-i18n="totalExpected">Total Expected</div>
+            <div class="value" id="form-expected">$0.00</div>
+          </div>
+          <div class="stat">
+            <div class="label" data-i18n="amountReceived">Amount Received</div>
+            <div class="value" id="form-received">$0.00</div>
+          </div>
+          <div class="stat">
+            <div class="label" data-i18n="balanceDue">Balance Due</div>
+            <div class="value balance-zero" id="form-balance">$0.00</div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-ghost" id="reset-btn" data-i18n="clearForm">Clear form</button>
+          <button type="submit" class="btn-primary" id="submit-btn" data-i18n="recordSale">Record sale</button>
+        </div>
+      </form>
+    </div>
+
+  </section>
+
+  <!-- ============ DASHBOARD VIEW ============ -->
+  <section class="view" id="view-dashboard">
+
+    <div class="card">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom: 14px;">
+        <h2 data-i18n="dashboard" style="margin:0;">Dashboard</h2>
+        <button type="button" class="lock-btn" id="lock-btn" data-i18n="lockDashboard">Lock dashboard</button>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="label" data-i18n="ticketsRemaining">Tickets Remaining</div>
+          <div class="value" id="kpi-remaining">100</div>
+          <div class="sub" id="kpi-remaining-sub"></div>
+          <div class="inv-bar-wrap"><div class="inv-bar" id="inv-bar" style="width:0%"></div></div>
+        </div>
+        <div class="kpi">
+          <div class="label" data-i18n="totalTicketsSold">Total Tickets Sold</div>
+          <div class="value" id="kpi-sold">0</div>
+          <div class="sub" id="kpi-sold-sub"></div>
+        </div>
+        <div class="kpi">
+          <div class="label" data-i18n="adultTickets">Adult Tickets</div>
+          <div class="value" id="kpi-adult">0</div>
+          <div class="sub" id="kpi-adult-sub"></div>
+        </div>
+        <div class="kpi">
+          <div class="label" data-i18n="childTickets">Children Tickets</div>
+          <div class="value" id="kpi-child">0</div>
+          <div class="sub" id="kpi-child-sub"></div>
+        </div>
+        <div class="kpi">
+          <div class="label" data-i18n="totalExpected">Total Expected</div>
+          <div class="value" id="kpi-expected">$0</div>
+        </div>
+        <div class="kpi">
+          <div class="label" data-i18n="totalReceived">Total Received</div>
+          <div class="value" id="kpi-received">$0</div>
+        </div>
+        <div class="kpi">
+          <div class="label" data-i18n="outstandingBalance">Outstanding Balance</div>
+          <div class="value" id="kpi-balance">$0</div>
+        </div>
+        <div class="kpi">
+          <div class="label" data-i18n="initialInventory">Initial Inventory</div>
+          <div class="value" style="display:flex; gap:6px; align-items:baseline;">
+            <input type="number" id="inventory-input" min="1" value="100" style="width:90px; font-size:18px; font-weight:700; padding:4px 8px;" />
+          </div>
+          <div class="sub" data-i18n="adjustIfNeeded">Adjust if needed</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 data-i18n="sellersTitle">Sellers</h2>
+      <div id="sellers-list"></div>
+      <div id="sellers-empty" class="empty" data-i18n="sellersEmpty" style="display:none;">No sellers yet. Add one below.</div>
+      <div class="seller-add">
+        <div>
+          <label for="new-seller-name" data-i18n="newSellerName">Seller name</label>
+          <input type="text" id="new-seller-name" />
+        </div>
+        <div>
+          <label for="new-seller-password" data-i18n="newSellerPassword">Password</label>
+          <input type="text" id="new-seller-password" />
+        </div>
+        <button type="button" class="btn-primary" id="add-seller-btn" data-i18n="addSeller">+ Add seller</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 data-i18n="salesLog">Sales Log</h2>
+      <div class="toolbar">
+        <input type="text" id="search" data-i18n-placeholder="searchPlaceholder" placeholder="Search by buyer, seller, or sale ID..." />
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn-secondary" id="export-csv" data-i18n="exportCsv">Export CSV</button>
+          <button type="button" class="btn-danger" id="clear-all" data-i18n="clearAll">Clear all data</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table id="log-table">
+          <thead>
+            <tr>
+              <th data-i18n="thSaleId">Sale ID</th>
+              <th data-i18n="thDate">Date</th>
+              <th data-i18n="thBuyer">Buyer</th>
+              <th data-i18n="thSeller">Seller</th>
+              <th data-i18n="thPayment">Payment</th>
+              <th data-i18n="thCategory">Category</th>
+              <th class="num" data-i18n="thQty">Qty</th>
+              <th class="num" data-i18n="thUnit">Unit</th>
+              <th class="num" data-i18n="thSubtotal">Subtotal</th>
+              <th class="num" data-i18n="thSaleTotal">Sale Total</th>
+              <th class="num" data-i18n="thReceived">Received</th>
+              <th class="num" data-i18n="thBalance">Balance</th>
+              <th data-i18n="thNotes">Notes</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="log-body"></tbody>
+        </table>
+        <div id="empty-state" class="empty" data-i18n="emptyState">No sales recorded yet.</div>
+      </div>
+    </div>
+
+  </section>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-backdrop" id="pw-modal">
+  <div class="modal">
+    <h3 data-i18n="pwTitle">Dashboard Access</h3>
+    <p data-i18n="pwPrompt">Enter the admin password to view the dashboard.</p>
+    <input type="password" id="pw-input" autocomplete="off" />
+    <div id="pw-error" class="pw-error" style="display:none;" data-i18n="pwWrong">Incorrect password.</div>
+    <div class="modal-actions">
+      <button type="button" class="btn-ghost" id="pw-cancel" data-i18n="cancel">Cancel</button>
+      <button type="button" class="btn-primary" id="pw-submit" data-i18n="unlock">Unlock</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getAuth, signInAnonymously, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import {
+  initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
+  collection, doc, setDoc, deleteDoc, addDoc, onSnapshot, query, orderBy,
+  serverTimestamp, writeBatch, getDocs
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// --- Firebase init ---
+const firebaseConfig = {
+  apiKey: "AIzaSyCD5mmOhrlrUcKgJU5RWTyvqmvY3x_BxOU",
+  authDomain: "aico-tickets.firebaseapp.com",
+  projectId: "aico-tickets",
+  storageBucket: "aico-tickets.firebasestorage.app",
+  messagingSenderId: "664552246946",
+  appId: "1:664552246946:web:2e8eb7f2c3b42cdab811fb"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+let db;
+try {
+  db = initializeFirestore(fbApp, {
+    localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+  });
+} catch (e) {
+  // Fallback if persistence already initialized in another tab
+  const { getFirestore } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+  db = getFirestore(fbApp);
+}
+
+// --- Categories ---
+const CATEGORIES = {
+  ADULT_MEMBER:    { i18nKey: 'catAdultMember',    price: 50, type: 'adult', member: true,  badge: 'adult-m' },
+  ADULT_NONMEMBER: { i18nKey: 'catAdultNonMember', price: 50, type: 'adult', member: false, badge: 'adult-n' },
+  CHILD_MEMBER:    { i18nKey: 'catChildMember',    price: 25, type: 'child', member: true,  badge: 'child-m' },
+  CHILD_NONMEMBER: { i18nKey: 'catChildNonMember', price: 50, type: 'child', member: false, badge: 'child-n' },
+};
+
+// --- i18n ---
+const I18N = {
+  en: {
+    appTitle: 'AICO Ticket Sales',
+    appSubtitle: 'Live, multi-device ticket sales tracking.',
+    online: 'Online',
+    offline: 'Offline',
+    tabSales: 'Sales Entry',
+    tabDashboard: 'Dashboard',
+    signInTitle: 'Sign in',
+    signInSubtitle: 'Select your name and enter your password.',
+    yourName: 'Your name',
+    passwordLabel: 'Password',
+    signIn: 'Sign in',
+    signOut: 'Sign out',
+    loginError: 'Wrong name or password.',
+    loginHelp: 'No sellers yet? Sign in as Admin (password AICO2026) to add them.',
+    adminLabel: 'Admin',
+    recordNewSale: 'Record New Sale',
+    buyerName: 'Buyer name',
+    dateOfSale: 'Date of sale',
+    sellerName: 'Seller name',
+    paymentMethod: 'Payment method',
+    selectPlaceholder: 'Select...',
+    payCash: 'Cash',
+    payCard: 'Card',
+    payCheck: 'Check',
+    payOther: 'Other',
+    payOtherPlaceholder: 'Specify other method...',
+    pwTitle: 'Dashboard Access',
+    pwPrompt: 'Enter the admin password to view the dashboard.',
+    pwWrong: 'Incorrect password.',
+    cancel: 'Cancel',
+    unlock: 'Unlock',
+    lockDashboard: 'Lock dashboard',
+    alertSpecifyOther: 'Please specify the other payment method.',
+    lineItems: 'Line items',
+    category: 'Category',
+    quantity: 'Quantity',
+    subtotal: 'Subtotal',
+    addLineItem: '+ Add line item',
+    amountReceivedLabel: 'Amount received ($)',
+    notesLabel: 'Notes (optional)',
+    totalExpected: 'Total Expected',
+    amountReceived: 'Amount Received',
+    balanceDue: 'Balance Due',
+    clearForm: 'Clear form',
+    recordSale: 'Record sale',
+    catAdultMember: 'Adult — AICO Member',
+    catAdultNonMember: 'Adult — Non-Member',
+    catChildMember: 'Child <18 — Member Family',
+    catChildNonMember: 'Child <18 — Non-Member Family',
+    dashboard: 'Dashboard',
+    ticketsRemaining: 'Tickets Remaining',
+    totalTicketsSold: 'Total Tickets Sold',
+    adultTickets: 'Adult Tickets',
+    childTickets: 'Children Tickets',
+    totalReceived: 'Total Received',
+    outstandingBalance: 'Outstanding Balance',
+    initialInventory: 'Initial Inventory',
+    adjustIfNeeded: 'Adjust if needed',
+    sellersTitle: 'Sellers',
+    sellersEmpty: 'No sellers yet. Add one below.',
+    newSellerName: 'Seller name',
+    newSellerPassword: 'Password',
+    addSeller: '+ Add seller',
+    removeSeller: 'Remove',
+    confirmRemoveSeller: 'Remove seller "{name}"?',
+    alertSellerExists: 'A seller with that name already exists.',
+    alertSellerInvalid: 'Please provide both a name and a password.',
+    alertSellerReserved: '"Admin" is reserved. Please choose another name.',
+    salesLog: 'Sales Log',
+    searchPlaceholder: 'Search by buyer, seller, or sale ID...',
+    exportCsv: 'Export CSV',
+    clearAll: 'Clear all data',
+    thSaleId: 'Sale ID',
+    thDate: 'Date',
+    thBuyer: 'Buyer',
+    thSeller: 'Seller',
+    thPayment: 'Payment',
+    thCategory: 'Category',
+    thQty: 'Qty',
+    thUnit: 'Unit',
+    thSubtotal: 'Subtotal',
+    thSaleTotal: 'Sale Total',
+    thReceived: 'Received',
+    thBalance: 'Balance',
+    thNotes: 'Notes',
+    delete: 'Delete',
+    emptyState: 'No sales recorded yet.',
+    selectCategory: 'Select category...',
+    ofN: 'of {n}',
+    acrossN: 'across {n} sales',
+    memberSplit: 'Member {m} / Non-member {n}',
+    alertNoLines: 'Please add at least one line item with a category and quantity.',
+    confirmExceedInv: 'This sale has {x} tickets but only {y} remain in inventory. Record anyway?',
+    confirmDeleteSale: 'Delete this entire sale? This cannot be undone.',
+    confirmClearAll1: 'Delete ALL sales records? This cannot be undone.',
+    confirmClearAll2: 'Are you absolutely sure? All sales data will be lost.',
+    alertNoSalesExport: 'No sales to export.',
+    toastSaved: 'Sale recorded.',
+    toastSellerAdded: 'Seller added.',
+    toastSellerRemoved: 'Seller removed.',
+    toastError: 'Something went wrong: ',
+    splashMsg: 'Connecting to the cloud...',
+    locale: 'en-US',
+  },
+  fr: {
+    appTitle: 'Vente de billets AICO',
+    appSubtitle: 'Suivi des ventes en temps réel, multi-appareils.',
+    online: 'En ligne',
+    offline: 'Hors ligne',
+    tabSales: 'Saisie des ventes',
+    tabDashboard: 'Tableau de bord',
+    signInTitle: 'Connexion',
+    signInSubtitle: 'Sélectionnez votre nom et saisissez votre mot de passe.',
+    yourName: 'Votre nom',
+    passwordLabel: 'Mot de passe',
+    signIn: 'Se connecter',
+    signOut: 'Se déconnecter',
+    loginError: 'Nom ou mot de passe incorrect.',
+    loginHelp: 'Aucun vendeur ? Connectez-vous en tant qu’Admin (mot de passe AICO2026) pour en ajouter.',
+    adminLabel: 'Admin',
+    recordNewSale: 'Enregistrer une nouvelle vente',
+    buyerName: 'Nom de l’acheteur',
+    dateOfSale: 'Date de la vente',
+    sellerName: 'Nom du vendeur',
+    paymentMethod: 'Mode de paiement',
+    selectPlaceholder: 'Sélectionner...',
+    payCash: 'Espèces',
+    payCard: 'Carte',
+    payCheck: 'Chèque',
+    payOther: 'Autre',
+    payOtherPlaceholder: 'Préciser le mode de paiement...',
+    pwTitle: 'Accès au tableau de bord',
+    pwPrompt: 'Saisissez le mot de passe administrateur.',
+    pwWrong: 'Mot de passe incorrect.',
+    cancel: 'Annuler',
+    unlock: 'Déverrouiller',
+    lockDashboard: 'Verrouiller',
+    alertSpecifyOther: 'Veuillez préciser l’autre mode de paiement.',
+    lineItems: 'Articles',
+    category: 'Catégorie',
+    quantity: 'Quantité',
+    subtotal: 'Sous-total',
+    addLineItem: '+ Ajouter un article',
+    amountReceivedLabel: 'Montant reçu ($)',
+    notesLabel: 'Notes (facultatif)',
+    totalExpected: 'Total attendu',
+    amountReceived: 'Montant reçu',
+    balanceDue: 'Solde dû',
+    clearForm: 'Effacer le formulaire',
+    recordSale: 'Enregistrer la vente',
+    catAdultMember: 'Adulte — Membre AICO',
+    catAdultNonMember: 'Adulte — Non-membre',
+    catChildMember: 'Enfant <18 — Famille membre',
+    catChildNonMember: 'Enfant <18 — Famille non-membre',
+    dashboard: 'Tableau de bord',
+    ticketsRemaining: 'Billets restants',
+    totalTicketsSold: 'Total des billets vendus',
+    adultTickets: 'Billets adulte',
+    childTickets: 'Billets enfant',
+    totalReceived: 'Total reçu',
+    outstandingBalance: 'Solde impayé',
+    initialInventory: 'Inventaire initial',
+    adjustIfNeeded: 'Ajuster au besoin',
+    sellersTitle: 'Vendeurs',
+    sellersEmpty: 'Aucun vendeur. Ajoutez-en un ci-dessous.',
+    newSellerName: 'Nom du vendeur',
+    newSellerPassword: 'Mot de passe',
+    addSeller: '+ Ajouter un vendeur',
+    removeSeller: 'Retirer',
+    confirmRemoveSeller: 'Retirer le vendeur « {name} » ?',
+    alertSellerExists: 'Un vendeur avec ce nom existe déjà.',
+    alertSellerInvalid: 'Veuillez fournir un nom et un mot de passe.',
+    alertSellerReserved: '« Admin » est réservé. Veuillez choisir un autre nom.',
+    salesLog: 'Registre des ventes',
+    searchPlaceholder: 'Rechercher par acheteur, vendeur ou ID...',
+    exportCsv: 'Exporter CSV',
+    clearAll: 'Tout effacer',
+    thSaleId: 'ID Vente',
+    thDate: 'Date',
+    thBuyer: 'Acheteur',
+    thSeller: 'Vendeur',
+    thPayment: 'Paiement',
+    thCategory: 'Catégorie',
+    thQty: 'Qté',
+    thUnit: 'Unitaire',
+    thSubtotal: 'Sous-total',
+    thSaleTotal: 'Total vente',
+    thReceived: 'Reçu',
+    thBalance: 'Solde',
+    thNotes: 'Notes',
+    delete: 'Supprimer',
+    emptyState: 'Aucune vente enregistrée.',
+    selectCategory: 'Sélectionner la catégorie...',
+    ofN: 'sur {n}',
+    acrossN: 'réparti sur {n} ventes',
+    memberSplit: 'Membre {m} / Non-membre {n}',
+    alertNoLines: 'Veuillez ajouter au moins un article avec une catégorie et une quantité.',
+    confirmExceedInv: 'Cette vente comporte {x} billets, mais il n’en reste que {y} en inventaire. Enregistrer quand même ?',
+    confirmDeleteSale: 'Supprimer toute cette vente ? Cette action est irréversible.',
+    confirmClearAll1: 'Supprimer TOUS les enregistrements ? Cette action est irréversible.',
+    confirmClearAll2: 'Êtes-vous absolument sûr ? Toutes les données seront perdues.',
+    alertNoSalesExport: 'Aucune vente à exporter.',
+    toastSaved: 'Vente enregistrée.',
+    toastSellerAdded: 'Vendeur ajouté.',
+    toastSellerRemoved: 'Vendeur retiré.',
+    toastError: 'Une erreur est survenue : ',
+    splashMsg: 'Connexion au cloud...',
+    locale: 'fr-FR',
+  },
+};
+
+// --- State ---
+const LANG_KEY = 'aico-lang-v1';
+const USER_KEY = 'aico-user-v1';
+const ADMIN_PASSWORD = 'AICO2026';
+
+let sales = [];
+let sellers = [];
+let inventory = 100;
+let lang = localStorage.getItem(LANG_KEY) || 'en';
+let currentUser = JSON.parse(sessionStorage.getItem(USER_KEY) || 'null');
+let dashUnlocked = false;
+let view = 'login';
+let firstLoadDone = false;
+
+// --- Helpers ---
+const $ = (id) => document.getElementById(id);
+const t = (key) => I18N[lang][key] ?? I18N.en[key] ?? key;
+const fmt = (n) => '$' + (Number(n) || 0).toFixed(2);
+const todayISO = () => {
+  const d = new Date();
+  const tz = d.getTimezoneOffset() * 60000;
+  return new Date(d - tz).toISOString().slice(0,10);
+};
+const formatDate = (iso) => {
+  if (!iso) return '';
+  const [y,m,d] = iso.split('-').map(Number);
+  const dt = new Date(y, m-1, d);
+  return dt.toLocaleDateString(I18N[lang].locale, { year:'numeric', month:'long', day:'numeric' });
+};
+const uid = () => 'S' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2,5).toUpperCase();
+const escapeHtml = (s) => String(s ?? '').replace(/[&<>"']/g, c =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function saveLang() { localStorage.setItem(LANG_KEY, lang); }
+function saveUser() {
+  if (currentUser) sessionStorage.setItem(USER_KEY, JSON.stringify(currentUser));
+  else sessionStorage.removeItem(USER_KEY);
+}
+
+function showToast(msg, isError = false) {
+  const el = $('toast');
+  el.textContent = msg;
+  el.classList.toggle('error', isError);
+  el.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => el.classList.remove('show'), isError ? 4000 : 2200);
+}
+
+// --- Connection status ---
+function setOnline(isOnline) {
+  const el = $('conn-status');
+  el.classList.toggle('offline', !isOnline);
+  $('conn-text').textContent = t(isOnline ? 'online' : 'offline');
+  el.title = isOnline ? '' : 'Changes will sync when reconnected.';
+}
+window.addEventListener('online', () => setOnline(true));
+window.addEventListener('offline', () => setOnline(false));
+setOnline(navigator.onLine);
+
+// --- i18n re-application ---
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.getAttribute('data-i18n'));
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    el.placeholder = t(el.getAttribute('data-i18n-placeholder'));
+  });
+  $('locked-date').textContent = formatDate(todayISO());
+  $('splash-msg').textContent = t('splashMsg');
+  setOnline(navigator.onLine);
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.lang === lang);
+  });
+  refreshLineItemCategoryOptions();
+  refreshLoginNameOptions();
+  renderSellersList();
+  renderAll();
+}
+
+// --- Login / auth ---
+function refreshLoginNameOptions() {
+  const sel = $('login-name');
+  const cur = sel.value;
+  const opts = [`<option value="__admin__">${escapeHtml(t('adminLabel'))}</option>`];
+  for (const s of sellers) {
+    opts.push(`<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)}</option>`);
+  }
+  sel.innerHTML = opts.join('');
+  if (cur) sel.value = cur;
+}
+
+function attemptLogin() {
+  const sel = $('login-name').value;
+  const pwd = $('login-password').value;
+  let ok = false;
+  if (sel === '__admin__') {
+    if (pwd === ADMIN_PASSWORD) {
+      currentUser = { name: '', role: 'admin' };
+      dashUnlocked = true;
+      ok = true;
+    }
+  } else {
+    const seller = sellers.find(s => s.name === sel);
+    if (seller && seller.password === pwd) {
+      currentUser = { name: seller.name, role: 'seller' };
+      ok = true;
+    }
+  }
+  if (!ok) {
+    $('login-error').classList.add('show');
+    $('login-password').select();
+    return;
+  }
+  $('login-error').classList.remove('show');
+  $('login-password').value = '';
+  saveUser();
+  refreshAuthUI();
+  setView(currentUser.role === 'admin' ? 'dashboard' : 'sales');
+}
+
+function logout() {
+  currentUser = null;
+  dashUnlocked = false;
+  saveUser();
+  refreshAuthUI();
+  setView('login');
+}
+
+function refreshAuthUI() {
+  if (currentUser) {
+    const displayName = currentUser.role === 'admin' ? t('adminLabel') : currentUser.name;
+    $('user-name').textContent = displayName;
+    $('user-pill').style.display = 'inline-flex';
+    if (currentUser.role === 'seller') {
+      $('tabs').style.display = 'inline-flex';
+      $('locked-seller').textContent = currentUser.name;
+    } else {
+      $('tabs').style.display = 'none';
+    }
+  } else {
+    $('user-pill').style.display = 'none';
+    $('tabs').style.display = 'none';
+  }
+}
+
+// --- View routing ---
+function setView(v) {
+  if (v === 'login') {
+    view = 'login';
+    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+    $('view-login').classList.add('active');
+    setTimeout(() => $('login-password').focus(), 50);
+    return;
+  }
+  if (!currentUser) { setView('login'); return; }
+  if (currentUser.role === 'admin' && v !== 'dashboard') v = 'dashboard';
+  if (v === 'dashboard' && currentUser.role === 'seller' && !dashUnlocked) {
+    showPwModal();
+    return;
+  }
+  if (v === 'sales' && currentUser.role === 'seller') {
+    dashUnlocked = false;
+  }
+  view = v;
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  $('view-' + v).classList.add('active');
+  document.querySelectorAll('.tab').forEach(b => {
+    b.classList.toggle('active', b.dataset.view === v);
+  });
+}
+
+function showPwModal() {
+  const m = $('pw-modal');
+  m.classList.add('show');
+  $('pw-input').value = '';
+  $('pw-error').style.display = 'none';
+  setTimeout(() => $('pw-input').focus(), 50);
+}
+function hidePwModal() { $('pw-modal').classList.remove('show'); }
+function attemptUnlock() {
+  if ($('pw-input').value === ADMIN_PASSWORD) {
+    dashUnlocked = true;
+    hidePwModal();
+    setView('dashboard');
+  } else {
+    $('pw-error').style.display = 'block';
+    $('pw-input').select();
+  }
+}
+
+// --- Sellers (Firestore) ---
+function renderSellersList() {
+  const wrap = $('sellers-list');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  if (sellers.length === 0) {
+    $('sellers-empty').style.display = 'block';
+    return;
+  }
+  $('sellers-empty').style.display = 'none';
+  sellers.forEach((s) => {
+    const row = document.createElement('div');
+    row.className = 'seller-row';
+    row.innerHTML = `
+      <div class="name">${escapeHtml(s.name)}</div>
+      <div class="pwd">${escapeHtml(s.password)}</div>
+      <button type="button" class="btn-danger" data-rm="${escapeHtml(s._docId)}">${escapeHtml(t('removeSeller'))}</button>
+    `;
+    row.querySelector('[data-rm]').addEventListener('click', async () => {
+      const msg = t('confirmRemoveSeller').replace('{name}', s.name);
+      if (!confirm(msg)) return;
+      try {
+        await deleteDoc(doc(db, 'sellers', s._docId));
+        showToast(t('toastSellerRemoved'));
+      } catch (e) {
+        showToast(t('toastError') + e.message, true);
+      }
+    });
+    wrap.appendChild(row);
+  });
+}
+
+async function addSeller() {
+  const name = $('new-seller-name').value.trim();
+  const password = $('new-seller-password').value.trim();
+  if (!name || !password) { alert(t('alertSellerInvalid')); return; }
+  if (name.toLowerCase() === 'admin' || name === '__admin__') { alert(t('alertSellerReserved')); return; }
+  if (sellers.some(s => s.name.toLowerCase() === name.toLowerCase())) {
+    alert(t('alertSellerExists')); return;
+  }
+  try {
+    await addDoc(collection(db, 'sellers'), { name, password });
+    $('new-seller-name').value = '';
+    $('new-seller-password').value = '';
+    showToast(t('toastSellerAdded'));
+  } catch (e) {
+    showToast(t('toastError') + e.message, true);
+  }
+}
+
+// --- Line items ---
+function buildCategoryOptions(selected = '') {
+  const opts = [`<option value="">${escapeHtml(t('selectCategory'))}</option>`];
+  for (const [key, cat] of Object.entries(CATEGORIES)) {
+    const sel = key === selected ? 'selected' : '';
+    opts.push(`<option value="${key}" ${sel}>${escapeHtml(t(cat.i18nKey))} ($${cat.price})</option>`);
+  }
+  return opts.join('');
+}
+function refreshLineItemCategoryOptions() {
+  document.querySelectorAll('#line-items .li-cat').forEach(sel => {
+    const cur = sel.value;
+    sel.innerHTML = buildCategoryOptions(cur);
+  });
+}
+function addLineItem(prefillCat = '', prefillQty = 1) {
+  const wrap = document.createElement('div');
+  wrap.className = 'line-item';
+  wrap.innerHTML = `
+    <div>
+      <label>${escapeHtml(t('category'))}</label>
+      <select class="li-cat" required>${buildCategoryOptions(prefillCat)}</select>
+    </div>
+    <div>
+      <label>${escapeHtml(t('quantity'))}</label>
+      <input type="number" class="li-qty" min="1" step="1" value="${prefillQty}" required />
+    </div>
+    <div>
+      <label>${escapeHtml(t('subtotal'))}</label>
+      <div class="subtotal">$0.00</div>
+    </div>
+    <button type="button" class="remove-btn" title="×">&times;</button>
+  `;
+  $('line-items').appendChild(wrap);
+  wrap.querySelector('.li-cat').addEventListener('change', updateFormTotals);
+  wrap.querySelector('.li-qty').addEventListener('input', updateFormTotals);
+  wrap.querySelector('.remove-btn').addEventListener('click', () => {
+    wrap.remove();
+    updateFormTotals();
+  });
+  updateFormTotals();
+}
+function readFormLines() {
+  return Array.from(document.querySelectorAll('#line-items .line-item')).map(div => ({
+    cat: div.querySelector('.li-cat').value,
+    qty: parseInt(div.querySelector('.li-qty').value, 10) || 0,
+  }));
+}
+function updateFormTotals() {
+  let total = 0;
+  document.querySelectorAll('#line-items .line-item').forEach(div => {
+    const cat = div.querySelector('.li-cat').value;
+    const qty = parseInt(div.querySelector('.li-qty').value, 10) || 0;
+    const price = CATEGORIES[cat]?.price || 0;
+    const sub = price * qty;
+    div.querySelector('.subtotal').textContent = fmt(sub);
+    total += sub;
+  });
+  const received = parseFloat($('amount-received').value) || 0;
+  const balance = total - received;
+  $('form-expected').textContent = fmt(total);
+  $('form-received').textContent = fmt(received);
+  const balEl = $('form-balance');
+  balEl.textContent = fmt(balance);
+  balEl.className = 'value ' + (balance > 0.001 ? 'balance-due' : balance < -0.001 ? 'balance-paid' : 'balance-zero');
+}
+function resetForm() {
+  $('sale-form').reset();
+  $('locked-date').textContent = formatDate(todayISO());
+  if (currentUser) $('locked-seller').textContent = currentUser.name;
+  $('line-items').innerHTML = '';
+  $('payment-other').style.display = 'none';
+  $('payment-other').required = false;
+  $('payment-other').value = '';
+  addLineItem();
+  updateFormTotals();
+}
+
+// --- Form submit (writes to Firestore) ---
+$('sale-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!currentUser || currentUser.role !== 'seller') return;
+  const lines = readFormLines().filter(l => l.cat && l.qty > 0);
+  if (lines.length === 0) { alert(t('alertNoLines')); return; }
+  const paymentVal = $('payment-method').value;
+  const paymentOtherVal = $('payment-other').value.trim();
+  if (paymentVal === 'Other' && !paymentOtherVal) {
+    alert(t('alertSpecifyOther'));
+    $('payment-other').focus();
+    return;
+  }
+  const ticketsInSale = lines.reduce((s,l) => s + l.qty, 0);
+  const remaining = inventory - totalSoldCount();
+  if (ticketsInSale > remaining) {
+    const msg = t('confirmExceedInv').replace('{x}', ticketsInSale).replace('{y}', remaining);
+    if (!confirm(msg)) return;
+  }
+  const saleId = uid();
+  const sale = {
+    saleId,
+    date: todayISO(),
+    buyer: $('buyer-name').value.trim(),
+    seller: currentUser.name,
+    payment: paymentVal,
+    paymentOther: paymentVal === 'Other' ? paymentOtherVal : '',
+    received: parseFloat($('amount-received').value) || 0,
+    notes: $('notes').value.trim(),
+    lines: lines.map(l => ({
+      cat: l.cat,
+      qty: l.qty,
+      unit: CATEGORIES[l.cat].price,
+      subtotal: CATEGORIES[l.cat].price * l.qty,
+    })),
+  };
+  sale.total = sale.lines.reduce((s,l) => s + l.subtotal, 0);
+  sale.balance = sale.total - sale.received;
+
+  const btn = $('submit-btn');
+  btn.disabled = true;
+  try {
+    await setDoc(doc(db, 'sales', saleId), {
+      ...sale,
+      createdAt: serverTimestamp(),
+    });
+    resetForm();
+    showToast(t('toastSaved'));
+  } catch (err) {
+    showToast(t('toastError') + err.message, true);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// --- Aggregation / dashboard / log (read from in-memory `sales`, kept synced by listener) ---
+function totalSoldCount() {
+  return sales.reduce((s, sale) => s + sale.lines.reduce((a,l) => a + l.qty, 0), 0);
+}
+function aggregate() {
+  let totalTickets = 0, adultM = 0, adultN = 0, childM = 0, childN = 0;
+  let expected = 0, received = 0;
+  for (const sale of sales) {
+    expected += sale.total;
+    received += sale.received;
+    for (const line of sale.lines) {
+      const c = CATEGORIES[line.cat];
+      if (!c) continue;
+      totalTickets += line.qty;
+      if (c.type === 'adult' && c.member) adultM += line.qty;
+      else if (c.type === 'adult') adultN += line.qty;
+      else if (c.type === 'child' && c.member) childM += line.qty;
+      else childN += line.qty;
+    }
+  }
+  return {
+    totalTickets,
+    adult: adultM + adultN, adultM, adultN,
+    child: childM + childN, childM, childN,
+    expected, received, balance: expected - received,
+  };
+}
+function renderDashboard() {
+  const a = aggregate();
+  const remaining = Math.max(0, inventory - a.totalTickets);
+  $('kpi-remaining').textContent = remaining;
+  $('kpi-remaining-sub').textContent = t('ofN').replace('{n}', inventory);
+  const pct = inventory > 0 ? Math.min(100, (a.totalTickets / inventory) * 100) : 0;
+  $('inv-bar').style.width = pct + '%';
+  $('kpi-sold').textContent = a.totalTickets;
+  $('kpi-sold-sub').textContent = t('acrossN').replace('{n}', sales.length);
+  $('kpi-adult').textContent = a.adult;
+  $('kpi-adult-sub').textContent = t('memberSplit').replace('{m}', a.adultM).replace('{n}', a.adultN);
+  $('kpi-child').textContent = a.child;
+  $('kpi-child-sub').textContent = t('memberSplit').replace('{m}', a.childM).replace('{n}', a.childN);
+  $('kpi-expected').textContent = fmt(a.expected);
+  $('kpi-received').textContent = fmt(a.received);
+  const balEl = $('kpi-balance');
+  balEl.textContent = fmt(a.balance);
+  balEl.className = 'value ' + (a.balance > 0.001 ? 'balance-due' : a.balance < -0.001 ? 'balance-paid' : 'balance-zero');
+}
+function renderLog() {
+  const tbody = $('log-body');
+  const search = $('search').value.trim().toLowerCase();
+  tbody.innerHTML = '';
+  let visibleCount = 0;
+  for (const sale of sales) {
+    const haystack = `${sale.saleId} ${sale.buyer} ${sale.seller} ${sale.payment}`.toLowerCase();
+    if (search && !haystack.includes(search)) continue;
+    sale.lines.forEach((line, idx) => {
+      const c = CATEGORIES[line.cat];
+      if (!c) return;
+      const tr = document.createElement('tr');
+      const isFirst = idx === 0;
+      const balCls = sale.balance > 0.001 ? 'balance-due' : sale.balance < -0.001 ? 'balance-paid' : 'balance-zero';
+      tr.innerHTML = `
+        <td>${isFirst ? `<span class="pill">${escapeHtml(sale.saleId)}</span>` : ''}</td>
+        <td>${isFirst ? formatDate(sale.date) : ''}</td>
+        <td>${isFirst ? escapeHtml(sale.buyer) : ''}</td>
+        <td>${isFirst ? escapeHtml(sale.seller) : ''}</td>
+        <td>${isFirst ? escapeHtml(localizePayment(sale.payment, sale.paymentOther)) : ''}</td>
+        <td><span class="badge ${c.badge}">${escapeHtml(t(c.i18nKey))}</span></td>
+        <td class="num">${line.qty}</td>
+        <td class="num">${fmt(line.unit)}</td>
+        <td class="num">${fmt(line.subtotal)}</td>
+        <td class="num">${isFirst ? '<strong>' + fmt(sale.total) + '</strong>' : ''}</td>
+        <td class="num">${isFirst ? fmt(sale.received) : ''}</td>
+        <td class="num ${isFirst ? balCls : ''}">${isFirst ? fmt(sale.balance) : ''}</td>
+        <td>${isFirst ? escapeHtml(sale.notes || '') : ''}</td>
+        <td>${isFirst ? `<button class="btn-ghost" data-del="${escapeHtml(sale.saleId)}">${escapeHtml(t('delete'))}</button>` : ''}</td>
+      `;
+      tbody.appendChild(tr);
+      visibleCount++;
+    });
+  }
+  $('empty-state').style.display = visibleCount === 0 ? 'block' : 'none';
+  tbody.querySelectorAll('[data-del]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-del');
+      if (!confirm(t('confirmDeleteSale'))) return;
+      try { await deleteDoc(doc(db, 'sales', id)); }
+      catch (e) { showToast(t('toastError') + e.message, true); }
+    });
+  });
+}
+function localizePayment(p, other) {
+  if (p === 'Other' && other) return other;
+  const map = { Cash: 'payCash', Card: 'payCard', Check: 'payCheck', Other: 'payOther' };
+  return map[p] ? t(map[p]) : (p || '');
+}
+function renderAll() { renderDashboard(); renderLog(); }
+
+// --- Wire UI ---
+$('amount-received').addEventListener('input', updateFormTotals);
+$('add-line-btn').addEventListener('click', () => addLineItem());
+$('reset-btn').addEventListener('click', resetForm);
+
+$('payment-method').addEventListener('change', () => {
+  const isOther = $('payment-method').value === 'Other';
+  const o = $('payment-other');
+  o.style.display = isOther ? 'block' : 'none';
+  o.required = isOther;
+  if (!isOther) o.value = '';
+  if (isOther) setTimeout(() => o.focus(), 30);
+});
+
+$('search').addEventListener('input', renderLog);
+
+$('inventory-input').addEventListener('change', async () => {
+  const n = parseInt($('inventory-input').value, 10);
+  if (!n || n < 1) { $('inventory-input').value = inventory; return; }
+  try {
+    await setDoc(doc(db, 'config', 'app'), { inventory: n }, { merge: true });
+  } catch (e) {
+    showToast(t('toastError') + e.message, true);
+    $('inventory-input').value = inventory;
+  }
+});
+
+$('clear-all').addEventListener('click', async () => {
+  if (!confirm(t('confirmClearAll1'))) return;
+  if (!confirm(t('confirmClearAll2'))) return;
+  try {
+    const snap = await getDocs(collection(db, 'sales'));
+    const batch = writeBatch(db);
+    snap.docs.forEach(d => batch.delete(d.ref));
+    await batch.commit();
+  } catch (e) {
+    showToast(t('toastError') + e.message, true);
+  }
+});
+
+$('export-csv').addEventListener('click', () => {
+  if (sales.length === 0) { alert(t('alertNoSalesExport')); return; }
+  const headers = [t('thSaleId'),t('thDate'),t('thBuyer'),t('thSeller'),t('thPayment'),t('thCategory'),t('thQty'),t('thUnit'),t('thSubtotal'),t('thSaleTotal'),t('thReceived'),t('thBalance'),t('thNotes')];
+  const rows = [headers];
+  for (const sale of sales) {
+    sale.lines.forEach((line, idx) => {
+      const c = CATEGORIES[line.cat]; if (!c) return;
+      const isFirst = idx === 0;
+      rows.push([
+        sale.saleId, sale.date, sale.buyer, sale.seller,
+        localizePayment(sale.payment, sale.paymentOther),
+        t(c.i18nKey), line.qty, line.unit.toFixed(2), line.subtotal.toFixed(2),
+        isFirst ? sale.total.toFixed(2) : '',
+        isFirst ? sale.received.toFixed(2) : '',
+        isFirst ? sale.balance.toFixed(2) : '',
+        isFirst ? (sale.notes || '') : '',
+      ]);
+    });
+  }
+  const csv = rows.map(r => r.map(v => {
+    const s = String(v);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s;
+  }).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `aico-ticket-sales-${todayISO()}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.querySelectorAll('.tab').forEach(b => {
+  b.addEventListener('click', () => setView(b.dataset.view));
+});
+document.querySelectorAll('.lang-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    lang = b.dataset.lang;
+    saveLang();
+    applyLang();
+  });
+});
+
+$('login-btn').addEventListener('click', attemptLogin);
+$('login-password').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); attemptLogin(); }
+});
+$('login-name').addEventListener('change', () => $('login-error').classList.remove('show'));
+$('logout-btn').addEventListener('click', logout);
+
+$('add-seller-btn').addEventListener('click', addSeller);
+$('new-seller-password').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); addSeller(); }
+});
+
+$('pw-cancel').addEventListener('click', hidePwModal);
+$('pw-submit').addEventListener('click', attemptUnlock);
+$('pw-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); attemptUnlock(); }
+  if (e.key === 'Escape') hidePwModal();
+});
+$('pw-modal').addEventListener('click', (e) => {
+  if (e.target.id === 'pw-modal') hidePwModal();
+});
+$('lock-btn').addEventListener('click', () => {
+  if (currentUser && currentUser.role === 'admin') {
+    logout();
+  } else {
+    dashUnlocked = false;
+    setView('sales');
+  }
+});
+
+setInterval(() => { $('locked-date').textContent = formatDate(todayISO()); }, 60000);
+
+// --- Bootstrapping: anonymous auth, then real-time listeners ---
+function hideSplash() {
+  const s = $('splash');
+  s.classList.add('hidden');
+  setTimeout(() => s.style.display = 'none', 320);
+}
+
+function startListeners() {
+  return new Promise((resolve) => {
+    let firstSales = false, firstSellers = false, firstConfig = false;
+    function check() { if (firstSales && firstSellers && firstConfig) resolve(); }
+
+    onSnapshot(query(collection(db, 'sales'), orderBy('createdAt', 'desc')), snap => {
+      sales = snap.docs.map(d => {
+        const data = d.data();
+        return { ...data, _docId: d.id };
+      });
+      firstSales = true; check();
+      renderAll();
+    }, err => {
+      showToast(t('toastError') + err.message, true);
+      firstSales = true; check();
+    });
+
+    onSnapshot(collection(db, 'sellers'), snap => {
+      sellers = snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
+      firstSellers = true; check();
+      refreshLoginNameOptions();
+      renderSellersList();
+      // If the currently logged-in seller no longer exists, log them out
+      if (currentUser && currentUser.role === 'seller'
+          && !sellers.some(s => s.name === currentUser.name)) {
+        logout();
+      }
+    }, err => {
+      showToast(t('toastError') + err.message, true);
+      firstSellers = true; check();
+    });
+
+    onSnapshot(doc(db, 'config', 'app'), snap => {
+      if (snap.exists()) {
+        const d = snap.data();
+        if (typeof d.inventory === 'number') {
+          inventory = d.inventory;
+          $('inventory-input').value = inventory;
+        }
+      } else {
+        // Seed default config
+        setDoc(doc(db, 'config', 'app'), { inventory: 100 }, { merge: true })
+          .catch(e => console.warn('Could not seed config', e));
+      }
+      firstConfig = true; check();
+      renderDashboard();
+    }, err => {
+      showToast(t('toastError') + err.message, true);
+      firstConfig = true; check();
+    });
+  });
+}
+
+async function boot() {
+  $('inventory-input').value = inventory;
+  addLineItem();
+  applyLang();
+  refreshAuthUI();
+
+  try {
+    await signInAnonymously(auth);
+  } catch (e) {
+    $('splash-msg').textContent = 'Auth failed: ' + e.message;
+    return;
+  }
+
+  await new Promise((resolve) => {
+    const unsub = onAuthStateChanged(auth, user => {
+      if (user) { unsub(); resolve(); }
+    });
+  });
+
+  await startListeners();
+  firstLoadDone = true;
+  hideSplash();
+
+  if (currentUser) {
+    if (currentUser.role === 'admin') {
+      dashUnlocked = true;
+      setView('dashboard');
+    } else {
+      // Verify the seller still exists
+      if (sellers.some(s => s.name === currentUser.name)) {
+        $('locked-seller').textContent = currentUser.name;
+        setView('sales');
+      } else {
+        currentUser = null;
+        saveUser();
+        refreshAuthUI();
+        setView('login');
+      }
+    }
+  } else {
+    setView('login');
+  }
+}
+
+boot();
+</script>
+</body>
+</html>
