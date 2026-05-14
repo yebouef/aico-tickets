@@ -726,6 +726,139 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* Tables setup */
+  .tables-list-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+  }
+  .table-card {
+    background: #f8fafc;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 12px;
+    position: relative;
+  }
+  .table-card .t-name { font-weight: 700; font-size: 15px; margin-bottom: 2px; }
+  .table-card .t-cap { font-size: 12px; color: var(--ink-soft); }
+  .table-card .t-bar-wrap {
+    margin-top: 8px;
+    background: var(--line);
+    border-radius: 999px;
+    height: 6px;
+    overflow: hidden;
+  }
+  .table-card .t-bar {
+    height: 100%;
+    background: var(--accent);
+    transition: width .3s;
+  }
+  .table-card .t-bar.warn { background: var(--warn); }
+  .table-card .t-bar.over { background: var(--bad); }
+  .table-card .t-remove {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: transparent;
+    color: var(--bad);
+    font-size: 16px;
+    padding: 4px 8px;
+    border: none;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .table-card .t-remove:hover { background: var(--bad-soft); border-radius: 4px; }
+  .add-table-row {
+    display: grid;
+    grid-template-columns: 1fr 110px auto;
+    gap: 8px;
+    align-items: end;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line);
+  }
+  .bulk-add-row {
+    display: flex;
+    gap: 8px;
+    align-items: end;
+    margin-top: 10px;
+    flex-wrap: wrap;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .bulk-add-row input[type="number"] { width: 80px; }
+
+  /* Assignment list */
+  .assign-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .assign-summary .item {
+    background: #f8fafc;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px;
+    text-align: center;
+  }
+  .assign-summary .item .value { font-size: 22px; font-weight: 700; }
+  .assign-summary .item .label {
+    font-size: 11px;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+  }
+  .assignment-row {
+    display: grid;
+    grid-template-columns: 1.4fr 70px 90px 1fr;
+    gap: 10px;
+    align-items: center;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--line);
+    font-size: 13px;
+  }
+  .assignment-row.unassigned { background: rgba(245, 158, 11, 0.06); }
+  .assignment-row .buyer { font-weight: 600; }
+  .assignment-row .guests { color: var(--ink-soft); }
+  .assignment-row .sale-id {
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+  }
+  .assignment-row select { padding: 6px 8px; }
+
+  /* Scanner: big table banner */
+  .scan-table-banner {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border: 3px solid var(--accent);
+    border-radius: 14px;
+    padding: 14px 20px;
+    margin: 6px 0 14px 0;
+    text-align: center;
+  }
+  .scan-table-banner .banner-label {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: 700;
+    opacity: .9;
+  }
+  .scan-table-banner .banner-value {
+    font-size: 36px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    margin-top: 2px;
+    line-height: 1.1;
+  }
+  .scan-table-banner.unassigned {
+    background: var(--warn-soft);
+    color: var(--warn);
+    border-color: var(--warn);
+  }
+  .scan-table-banner.unassigned .banner-value { font-size: 18px; }
+
   /* Buyer email callout */
   .email-callout {
     margin-top: 14px;
@@ -1281,6 +1414,53 @@
     </div>
 
     <div class="card">
+      <h2 data-i18n="tablesSetupTitle">Tables Setup</h2>
+      <p style="margin: -6px 0 14px 0; font-size: 12px; color: var(--ink-soft);" data-i18n="tablesSetupHelp">
+        Define each table and its seat capacity. Add tables as you figure out the layout.
+      </p>
+      <div id="tables-list" class="tables-list-grid"></div>
+      <div id="tables-empty" class="empty" data-i18n="tablesEmpty" style="display:none;">No tables yet. Add some below.</div>
+      <div class="add-table-row">
+        <div>
+          <label for="new-table-name" data-i18n="newTableName">Table name</label>
+          <input type="text" id="new-table-name" data-i18n-placeholder="newTableNamePh" placeholder="e.g. Table 1 or VIP" />
+        </div>
+        <div>
+          <label for="new-table-capacity" data-i18n="newTableCapacity">Capacity</label>
+          <input type="number" id="new-table-capacity" min="1" value="10" />
+        </div>
+        <button type="button" class="btn-primary" id="add-table-btn" data-i18n="addTable">+ Add table</button>
+      </div>
+      <div class="bulk-add-row">
+        <span data-i18n="bulkAddLabel">Quick: add</span>
+        <input type="number" id="bulk-count" min="1" max="50" value="10" />
+        <span data-i18n="bulkAddTablesOf">tables of</span>
+        <input type="number" id="bulk-capacity" min="1" value="10" />
+        <span data-i18n="bulkAddSeats">seats</span>
+        <button type="button" class="btn-secondary" id="bulk-add-tables-btn" data-i18n="addBulk">Add bulk</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 data-i18n="tableAssignmentsTitle">Table Assignments</h2>
+      <div class="assign-summary" id="assign-summary">
+        <div class="item"><div class="value" id="assign-summary-assigned">0</div><div class="label" data-i18n="summaryAssigned">Assigned</div></div>
+        <div class="item"><div class="value" id="assign-summary-unassigned">0</div><div class="label" data-i18n="summaryUnassigned">Unassigned</div></div>
+        <div class="item"><div class="value" id="assign-summary-tables">0</div><div class="label" data-i18n="summaryTables">Tables defined</div></div>
+      </div>
+      <div class="toolbar">
+        <input type="text" id="assign-search" data-i18n-placeholder="assignSearchPh" placeholder="Search by buyer..." />
+        <select id="assign-filter">
+          <option value="all" data-i18n="filterAll">All sales</option>
+          <option value="unassigned" data-i18n="filterUnassigned">Unassigned only</option>
+          <option value="assigned" data-i18n="filterAssigned">Assigned only</option>
+        </select>
+      </div>
+      <div id="assignments-list"></div>
+      <div id="assignments-empty" class="empty" data-i18n="assignEmpty" style="display:none;">No sales to assign yet.</div>
+    </div>
+
+    <div class="card">
       <h2 data-i18n="salesLog">Sales Log</h2>
       <div class="toolbar">
         <input type="text" id="search" data-i18n-placeholder="searchPlaceholder" placeholder="Search by buyer, seller, or sale ID..." />
@@ -1298,6 +1478,7 @@
               <th data-i18n="thBuyer">Buyer</th>
               <th data-i18n="thSeller">Seller</th>
               <th data-i18n="thPayment">Payment</th>
+              <th data-i18n="assignTableLabel">Table</th>
               <th data-i18n="thCategory">Category</th>
               <th class="num" data-i18n="thQty">Qty</th>
               <th class="num" data-i18n="thUnit">Unit</th>
@@ -1454,6 +1635,36 @@ const I18N = {
     outstandingBalance: 'Outstanding Balance',
     initialInventory: 'Initial Inventory',
     adjustIfNeeded: 'Adjust if needed',
+    tablesSetupTitle: 'Tables Setup',
+    tablesSetupHelp: 'Define each table and its seat capacity. Add tables as you figure out the layout.',
+    tablesEmpty: 'No tables yet. Add some below.',
+    newTableName: 'Table name',
+    newTableNamePh: 'e.g. Table 1 or VIP',
+    newTableCapacity: 'Capacity',
+    addTable: '+ Add table',
+    bulkAddLabel: 'Quick: add',
+    bulkAddTablesOf: 'tables of',
+    bulkAddSeats: 'seats',
+    addBulk: 'Add bulk',
+    confirmRemoveTable: 'Remove table "{name}"? Any sales assigned to it will become unassigned.',
+    tableCapacityUsed: '{used} / {cap} seats',
+    tableOver: '⚠ Over capacity',
+    tableAssignmentsTitle: 'Table Assignments',
+    summaryAssigned: 'Assigned',
+    summaryUnassigned: 'Unassigned',
+    summaryTables: 'Tables defined',
+    assignSearchPh: 'Search by buyer...',
+    filterAll: 'All sales',
+    filterUnassigned: 'Unassigned only',
+    filterAssigned: 'Assigned only',
+    assignEmpty: 'No sales to assign yet.',
+    assignSelectTable: '— No table —',
+    assignTableLabel: 'Table',
+    scanTableLabel: 'Table',
+    scanNoTable: 'No table assigned',
+    toastTableSaved: 'Table assigned.',
+    toastTableRemoved: 'Table removed.',
+    toastTableAdded: 'Table added.',
     sellersTitle: 'Sellers',
     sellersEmpty: 'No sellers yet. Add one below.',
     newSellerName: 'Seller name',
@@ -1649,6 +1860,36 @@ const I18N = {
     outstandingBalance: 'Solde impayé',
     initialInventory: 'Inventaire initial',
     adjustIfNeeded: 'Ajuster au besoin',
+    tablesSetupTitle: 'Configuration des tables',
+    tablesSetupHelp: 'Définissez chaque table et sa capacité. Ajoutez des tables au fur et à mesure.',
+    tablesEmpty: 'Aucune table. Ajoutez-en ci-dessous.',
+    newTableName: 'Nom de la table',
+    newTableNamePh: 'ex. Table 1 ou VIP',
+    newTableCapacity: 'Capacité',
+    addTable: '+ Ajouter une table',
+    bulkAddLabel: 'Ajout rapide :',
+    bulkAddTablesOf: 'tables de',
+    bulkAddSeats: 'places',
+    addBulk: 'Ajouter en lot',
+    confirmRemoveTable: 'Retirer la table « {name} » ? Les ventes assignées deviendront non-assignées.',
+    tableCapacityUsed: '{used} / {cap} places',
+    tableOver: '⚠ Capacité dépassée',
+    tableAssignmentsTitle: 'Attribution des tables',
+    summaryAssigned: 'Attribuées',
+    summaryUnassigned: 'Non attribuées',
+    summaryTables: 'Tables définies',
+    assignSearchPh: 'Rechercher par acheteur...',
+    filterAll: 'Toutes les ventes',
+    filterUnassigned: 'Non attribuées',
+    filterAssigned: 'Attribuées',
+    assignEmpty: 'Aucune vente à attribuer.',
+    assignSelectTable: '— Aucune table —',
+    assignTableLabel: 'Table',
+    scanTableLabel: 'Table',
+    scanNoTable: 'Aucune table attribuée',
+    toastTableSaved: 'Table attribuée.',
+    toastTableRemoved: 'Table retirée.',
+    toastTableAdded: 'Table ajoutée.',
     sellersTitle: 'Vendeurs',
     sellersEmpty: 'Aucun vendeur. Ajoutez-en un ci-dessous.',
     newSellerName: 'Nom du vendeur',
@@ -1802,6 +2043,7 @@ let appConfig = {
   emailjsServiceId: '',
   emailjsTemplateId: '',
   emailjsPublicKey: '',
+  tables: [], // [{ name, capacity }]
 };
 let lang = localStorage.getItem(LANG_KEY) || 'en';
 let currentUser = JSON.parse(sessionStorage.getItem(USER_KEY) || 'null');
@@ -2267,6 +2509,7 @@ function renderLog() {
         <td>${isFirst ? escapeHtml(sale.buyer) : ''}</td>
         <td>${isFirst ? escapeHtml(sale.seller) : ''}</td>
         <td>${isFirst ? escapeHtml(localizePayment(sale.payment, sale.paymentOther)) : ''}</td>
+        <td>${isFirst ? (sale.tableName ? `<strong>${escapeHtml(sale.tableName)}</strong>` : '<span style="color:var(--warn);">—</span>') : ''}</td>
         <td><span class="badge ${c.badge}">${escapeHtml(t(c.i18nKey))}</span></td>
         <td class="num">${line.qty}</td>
         <td class="num">${fmt(line.unit)}</td>
@@ -2340,7 +2583,7 @@ $('clear-all').addEventListener('click', async () => {
 
 $('export-csv').addEventListener('click', () => {
   if (sales.length === 0) { alert(t('alertNoSalesExport')); return; }
-  const headers = [t('thSaleId'),t('thDate'),t('thBuyer'),t('thSeller'),t('thPayment'),t('thCategory'),t('thQty'),t('thUnit'),t('thSubtotal'),t('thSaleTotal'),t('thReceived'),t('thBalance'),t('thNotes')];
+  const headers = [t('thSaleId'),t('thDate'),t('thBuyer'),t('thSeller'),t('thPayment'),t('assignTableLabel'),t('thCategory'),t('thQty'),t('thUnit'),t('thSubtotal'),t('thSaleTotal'),t('thReceived'),t('thBalance'),t('thNotes')];
   const rows = [headers];
   for (const sale of sales) {
     sale.lines.forEach((line, idx) => {
@@ -2349,6 +2592,7 @@ $('export-csv').addEventListener('click', () => {
       rows.push([
         sale.saleId, sale.date, sale.buyer, sale.seller,
         localizePayment(sale.payment, sale.paymentOther),
+        sale.tableName || '',
         t(c.i18nKey), line.qty, line.unit.toFixed(2), line.subtotal.toFixed(2),
         isFirst ? sale.total.toFixed(2) : '',
         isFirst ? sale.received.toFixed(2) : '',
@@ -2401,6 +2645,20 @@ $('new-seller-password').addEventListener('keydown', (e) => {
 
 $('save-config-btn').addEventListener('click', saveConfig);
 $('edit-config-btn').addEventListener('click', () => setConfigEditMode(true));
+
+// Tables setup
+$('add-table-btn').addEventListener('click', addTable);
+$('new-table-capacity').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); addTable(); }
+});
+$('new-table-name').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); addTable(); }
+});
+$('bulk-add-tables-btn').addEventListener('click', bulkAddTables);
+
+// Table assignments search/filter
+$('assign-search').addEventListener('input', renderTableAssignments);
+$('assign-filter').addEventListener('change', renderTableAssignments);
 $('cancel-config-btn').addEventListener('click', () => {
   // Revert visible values back to what's in Firestore (appConfig)
   applyConfigToInputs(); // this also re-locks
@@ -2450,6 +2708,8 @@ function startListeners() {
       });
       firstSales = true; check();
       renderAll();
+      renderTablesList();
+      renderTableAssignments();
     }, err => {
       showToast(t('toastError') + err.message, true);
       firstSales = true; check();
@@ -2486,8 +2746,11 @@ function startListeners() {
         appConfig.emailjsServiceId = d.emailjsServiceId || '';
         appConfig.emailjsTemplateId = d.emailjsTemplateId || '';
         appConfig.emailjsPublicKey = d.emailjsPublicKey || '';
+        appConfig.tables = Array.isArray(d.tables) ? d.tables : [];
         applyConfigToInputs();
         tryInitEmailjs();
+        renderTablesList();
+        renderTableAssignments();
       } else {
         setDoc(doc(db, 'config', 'app'), { inventory: 100 }, { merge: true })
           .catch(e => console.warn('Could not seed config', e));
@@ -2658,6 +2921,7 @@ function buildEmailParams(sale, recipientEmail) {
     tickets_summary: linesText,
     seller: sale.seller,
     sale_date: formatDate(sale.date),
+    table_name: sale.tableName || '',
   };
 }
 
@@ -2814,6 +3078,172 @@ async function renderTicketView(saleId) {
   `;
 }
 
+// =============== TABLES ===============
+function seatsUsedAtTable(tableName) {
+  return sales.reduce((sum, s) => {
+    if (s.tableName === tableName) {
+      const guests = (s.lines || []).reduce((g, l) => g + l.qty, 0);
+      return sum + guests;
+    }
+    return sum;
+  }, 0);
+}
+
+function renderTablesList() {
+  const wrap = $('tables-list');
+  if (!wrap) return;
+  const tables = appConfig.tables || [];
+  if (tables.length === 0) {
+    wrap.innerHTML = '';
+    $('tables-empty').style.display = 'block';
+    return;
+  }
+  $('tables-empty').style.display = 'none';
+  wrap.innerHTML = tables.map((tbl, idx) => {
+    const used = seatsUsedAtTable(tbl.name);
+    const cap = Number(tbl.capacity) || 0;
+    const pct = cap > 0 ? Math.min(100, (used / cap) * 100) : 0;
+    const over = used > cap;
+    const barClass = over ? 'over' : pct >= 85 ? 'warn' : '';
+    return `
+      <div class="table-card">
+        <button type="button" class="t-remove" data-rm-table="${escapeHtml(tbl.name)}" title="Remove">&times;</button>
+        <div class="t-name">${escapeHtml(tbl.name)}</div>
+        <div class="t-cap">${escapeHtml(t('tableCapacityUsed').replace('{used}', used).replace('{cap}', cap))}${over ? ' · <span style="color:var(--bad); font-weight:700;">' + escapeHtml(t('tableOver')) + '</span>' : ''}</div>
+        <div class="t-bar-wrap"><div class="t-bar ${barClass}" style="width:${pct}%;"></div></div>
+      </div>
+    `;
+  }).join('');
+  wrap.querySelectorAll('[data-rm-table]').forEach(btn => {
+    btn.addEventListener('click', () => removeTable(btn.getAttribute('data-rm-table')));
+  });
+}
+
+async function addTable() {
+  const name = $('new-table-name').value.trim();
+  const capacity = parseInt($('new-table-capacity').value, 10);
+  if (!name || !capacity || capacity < 1) return;
+  if ((appConfig.tables || []).some(t => t.name.toLowerCase() === name.toLowerCase())) {
+    alert('A table with that name already exists.');
+    return;
+  }
+  const newList = [...(appConfig.tables || []), { name, capacity }];
+  try {
+    await setDoc(doc(db, 'config', 'app'), { tables: newList }, { merge: true });
+    $('new-table-name').value = '';
+    showToast(t('toastTableAdded'));
+  } catch (e) {
+    showToast(t('toastError') + e.message, true);
+  }
+}
+
+async function bulkAddTables() {
+  const count = parseInt($('bulk-count').value, 10);
+  const capacity = parseInt($('bulk-capacity').value, 10);
+  if (!count || count < 1 || !capacity || capacity < 1) return;
+  const existing = appConfig.tables || [];
+  const used = new Set(existing.map(t => t.name.toLowerCase()));
+  let nextNum = 1;
+  const additions = [];
+  while (additions.length < count) {
+    const candidate = `Table ${nextNum}`;
+    if (!used.has(candidate.toLowerCase())) {
+      additions.push({ name: candidate, capacity });
+      used.add(candidate.toLowerCase());
+    }
+    nextNum++;
+    if (nextNum > 500) break; // safety
+  }
+  try {
+    await setDoc(doc(db, 'config', 'app'), { tables: [...existing, ...additions] }, { merge: true });
+    showToast(t('toastTableAdded'));
+  } catch (e) {
+    showToast(t('toastError') + e.message, true);
+  }
+}
+
+async function removeTable(name) {
+  if (!confirm(t('confirmRemoveTable').replace('{name}', name))) return;
+  const newList = (appConfig.tables || []).filter(t => t.name !== name);
+  try {
+    // Clear table assignment from any sales pointing at this table
+    const affected = sales.filter(s => s.tableName === name);
+    const batch = writeBatch(db);
+    affected.forEach(s => {
+      batch.update(doc(db, 'sales', s.saleId), { tableName: '' });
+    });
+    batch.set(doc(db, 'config', 'app'), { tables: newList }, { merge: true });
+    await batch.commit();
+    showToast(t('toastTableRemoved'));
+  } catch (e) {
+    showToast(t('toastError') + e.message, true);
+  }
+}
+
+async function setSaleTable(saleId, tableName) {
+  try {
+    await setDoc(doc(db, 'sales', saleId), { tableName: tableName || '' }, { merge: true });
+    showToast(t('toastTableSaved'));
+  } catch (e) {
+    showToast(t('toastError') + e.message, true);
+  }
+}
+
+function renderTableAssignments() {
+  const wrap = $('assignments-list');
+  if (!wrap) return;
+  const search = ($('assign-search')?.value || '').trim().toLowerCase();
+  const filter = $('assign-filter')?.value || 'all';
+  const tables = appConfig.tables || [];
+
+  let visible = sales.slice();
+  if (search) visible = visible.filter(s => `${s.buyer} ${s.saleId}`.toLowerCase().includes(search));
+  if (filter === 'unassigned') visible = visible.filter(s => !s.tableName);
+  if (filter === 'assigned') visible = visible.filter(s => !!s.tableName);
+
+  const totalAssigned = sales.filter(s => s.tableName).length;
+  const totalUnassigned = sales.length - totalAssigned;
+  $('assign-summary-assigned').textContent = totalAssigned;
+  $('assign-summary-unassigned').textContent = totalUnassigned;
+  $('assign-summary-tables').textContent = tables.length;
+
+  if (visible.length === 0) {
+    wrap.innerHTML = '';
+    $('assignments-empty').style.display = 'block';
+    return;
+  }
+  $('assignments-empty').style.display = 'none';
+
+  const tableOptions = (selected = '') => {
+    const opts = [`<option value="">${escapeHtml(t('assignSelectTable'))}</option>`];
+    for (const tbl of tables) {
+      const used = seatsUsedAtTable(tbl.name);
+      const cap = Number(tbl.capacity) || 0;
+      const label = `${tbl.name} (${used}/${cap})`;
+      opts.push(`<option value="${escapeHtml(tbl.name)}" ${tbl.name === selected ? 'selected' : ''}>${escapeHtml(label)}</option>`);
+    }
+    return opts.join('');
+  };
+
+  wrap.innerHTML = visible.map(s => {
+    const guests = (s.lines || []).reduce((g, l) => g + l.qty, 0);
+    return `
+      <div class="assignment-row ${s.tableName ? '' : 'unassigned'}">
+        <div class="buyer">${escapeHtml(s.buyer || '—')}</div>
+        <div class="guests">${guests} · ${t('scanGuests').replace('{n}', '').replace('(', '').replace(')', '').trim() || 'guests'}</div>
+        <div class="sale-id">${escapeHtml(s.saleId)}</div>
+        <select data-assign="${escapeHtml(s.saleId)}">${tableOptions(s.tableName || '')}</select>
+      </div>
+    `;
+  }).join('');
+
+  wrap.querySelectorAll('[data-assign]').forEach(sel => {
+    sel.addEventListener('change', () => {
+      setSaleTable(sel.getAttribute('data-assign'), sel.value);
+    });
+  });
+}
+
 function showTicketViewMode() {
   document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
   $('view-ticket').classList.add('active');
@@ -2948,8 +3378,12 @@ async function handleScannedTicket(saleId) {
     // Already checked in — show LOUD red warning + full details so staff can decide
     const scannedDate = sale.scannedAt.toDate ? sale.scannedAt.toDate() : new Date(sale.scannedAt);
     resEl.className = 'scan-result used show';
+    const usedTableBanner = sale.tableName
+      ? `<div class="scan-table-banner" style="background:white; border-color:var(--ink-soft); color:var(--ink-soft);"><div class="banner-label">${escapeHtml(t('scanTableLabel'))}</div><div class="banner-value">${escapeHtml(sale.tableName)}</div></div>`
+      : '';
     resEl.innerHTML = `
       <div class="big">⛔ ${escapeHtml(t('scanUsed'))}</div>
+      ${usedTableBanner}
       <div class="who">${escapeHtml(sale.buyer || '—')}</div>
       <div class="guests">${escapeHtml(t('scanGuests').replace('{n}', totalTickets))}</div>
       <div class="sub">${escapeHtml(t('scanCheckedInAt'))} ${escapeHtml(scannedDate.toLocaleString(I18N[lang].locale))}${sale.scannedBy ? ' ' + escapeHtml(t('scanBy')) + ' ' + escapeHtml(sale.scannedBy) : ''}</div>
@@ -2960,10 +3394,14 @@ async function handleScannedTicket(saleId) {
     return;
   }
 
-  // Valid — show green and offer Check In button
+  // Valid — show green, BIG TABLE banner, then offer Check In button
   resEl.className = 'scan-result valid show';
+  const tableBanner = sale.tableName
+    ? `<div class="scan-table-banner"><div class="banner-label">${escapeHtml(t('scanTableLabel'))}</div><div class="banner-value">${escapeHtml(sale.tableName)}</div></div>`
+    : `<div class="scan-table-banner unassigned"><div class="banner-label">${escapeHtml(t('scanTableLabel'))}</div><div class="banner-value">${escapeHtml(t('scanNoTable'))}</div></div>`;
   resEl.innerHTML = `
     <div class="big">✓ ${escapeHtml(t('scanValid'))}</div>
+    ${tableBanner}
     <div class="who">${escapeHtml(sale.buyer || '—')}</div>
     <div class="guests">${escapeHtml(t('scanGuests').replace('{n}', totalTickets))}</div>
     ${saleDetailsHtml(sale)}
