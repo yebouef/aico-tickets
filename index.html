@@ -2592,41 +2592,88 @@ function renderDashboard() {
   balEl.textContent = fmt(a.balance);
   balEl.className = 'value ' + (a.balance > 0.001 ? 'balance-due' : a.balance < -0.001 ? 'balance-paid' : 'balance-zero');
 }
+function tsMillis(ts) {
+  if (!ts) return 0;
+  if (typeof ts === 'number') return ts;
+  if (ts.toMillis) return ts.toMillis();
+  if (ts.seconds) return ts.seconds * 1000;
+  return 0;
+}
+
 function renderLog() {
   const tbody = $('log-body');
   const search = $('search').value.trim().toLowerCase();
   tbody.innerHTML = '';
   let visibleCount = 0;
-  for (const sale of sales) {
-    const haystack = `${sale.saleId} ${sale.buyer} ${sale.seller} ${sale.payment}`.toLowerCase();
-    if (search && !haystack.includes(search)) continue;
-    sale.lines.forEach((line, idx) => {
-      const c = CATEGORIES[line.cat];
-      if (!c) return;
+
+  // Combine sales and comps, sort by createdAt desc
+  const combined = [
+    ...sales.map(s => ({ _kind: 'sale', _ts: tsMillis(s.createdAt), data: s })),
+    ...comps.map(c => ({ _kind: 'comp', _ts: tsMillis(c.createdAt), data: c })),
+  ].sort((a, b) => b._ts - a._ts);
+
+  for (const item of combined) {
+    if (item._kind === 'sale') {
+      const sale = item.data;
+      const haystack = `${sale.saleId} ${sale.buyer} ${sale.seller} ${sale.payment}`.toLowerCase();
+      if (search && !haystack.includes(search)) continue;
+      sale.lines.forEach((line, idx) => {
+        const c = CATEGORIES[line.cat];
+        if (!c) return;
+        const tr = document.createElement('tr');
+        const isFirst = idx === 0;
+        const balCls = sale.balance > 0.001 ? 'balance-due' : sale.balance < -0.001 ? 'balance-paid' : 'balance-zero';
+        tr.innerHTML = `
+          <td>${isFirst ? `<span class="pill">${escapeHtml(sale.saleId)}</span>` : ''}</td>
+          <td>${isFirst ? formatDate(sale.date) : ''}</td>
+          <td>${isFirst ? escapeHtml(sale.buyer) : ''}</td>
+          <td>${isFirst ? escapeHtml(sale.seller) : ''}</td>
+          <td>${isFirst ? escapeHtml(localizePayment(sale.payment, sale.paymentOther)) : ''}</td>
+          <td>${isFirst ? (sale.tableName ? `<strong>${escapeHtml(sale.tableName)}</strong>` : '<span style="color:var(--warn);">—</span>') : ''}</td>
+          <td><span class="badge ${c.badge}">${escapeHtml(t(c.i18nKey))}</span></td>
+          <td class="num">${line.qty}</td>
+          <td class="num">${fmt(line.unit)}</td>
+          <td class="num">${fmt(line.subtotal)}</td>
+          <td class="num">${isFirst ? '<strong>' + fmt(sale.total) + '</strong>' : ''}</td>
+          <td class="num">${isFirst ? fmt(sale.received) : ''}</td>
+          <td class="num ${isFirst ? balCls : ''}">${isFirst ? fmt(sale.balance) : ''}</td>
+          <td>${isFirst ? escapeHtml(sale.notes || '') : ''}</td>
+          <td>${isFirst ? `<button class="btn-ghost" data-del="${escapeHtml(sale.saleId)}">${escapeHtml(t('delete'))}</button>` : ''}</td>
+        `;
+        tbody.appendChild(tr);
+        visibleCount++;
+      });
+    } else {
+      // Complimentary ticket — single row, visually distinct
+      const comp = item.data;
+      const haystack = `${comp.compId} ${comp.name} ${comp.notes || ''}`.toLowerCase();
+      if (search && !haystack.includes(search)) continue;
+      const guests = Number(comp.guests) || 1;
+      const dateStr = comp.createdAt && comp.createdAt.toDate ? comp.createdAt.toDate().toISOString().slice(0,10) : '';
       const tr = document.createElement('tr');
-      const isFirst = idx === 0;
-      const balCls = sale.balance > 0.001 ? 'balance-due' : sale.balance < -0.001 ? 'balance-paid' : 'balance-zero';
+      tr.style.background = 'rgba(245, 158, 11, 0.05)';
       tr.innerHTML = `
-        <td>${isFirst ? `<span class="pill">${escapeHtml(sale.saleId)}</span>` : ''}</td>
-        <td>${isFirst ? formatDate(sale.date) : ''}</td>
-        <td>${isFirst ? escapeHtml(sale.buyer) : ''}</td>
-        <td>${isFirst ? escapeHtml(sale.seller) : ''}</td>
-        <td>${isFirst ? escapeHtml(localizePayment(sale.payment, sale.paymentOther)) : ''}</td>
-        <td>${isFirst ? (sale.tableName ? `<strong>${escapeHtml(sale.tableName)}</strong>` : '<span style="color:var(--warn);">—</span>') : ''}</td>
-        <td><span class="badge ${c.badge}">${escapeHtml(t(c.i18nKey))}</span></td>
-        <td class="num">${line.qty}</td>
-        <td class="num">${fmt(line.unit)}</td>
-        <td class="num">${fmt(line.subtotal)}</td>
-        <td class="num">${isFirst ? '<strong>' + fmt(sale.total) + '</strong>' : ''}</td>
-        <td class="num">${isFirst ? fmt(sale.received) : ''}</td>
-        <td class="num ${isFirst ? balCls : ''}">${isFirst ? fmt(sale.balance) : ''}</td>
-        <td>${isFirst ? escapeHtml(sale.notes || '') : ''}</td>
-        <td>${isFirst ? `<button class="btn-ghost" data-del="${escapeHtml(sale.saleId)}">${escapeHtml(t('delete'))}</button>` : ''}</td>
+        <td><span class="pill" style="background: var(--warn-soft); color: var(--warn);">${escapeHtml(comp.compId)}</span></td>
+        <td>${escapeHtml(formatDate(dateStr))}</td>
+        <td>${escapeHtml(comp.name || '—')}</td>
+        <td style="color: var(--ink-soft); font-style: italic;">—</td>
+        <td><span style="color: var(--warn); font-weight: 600;">${escapeHtml(t('compTypeLabel'))}</span></td>
+        <td>${comp.tableName ? `<strong>${escapeHtml(comp.tableName)}</strong>` : '<span style="color:var(--warn);">—</span>'}</td>
+        <td><span class="badge" style="background: var(--warn-soft); color: var(--warn);">COMP</span></td>
+        <td class="num">${guests}</td>
+        <td class="num" style="color: var(--ink-soft);">—</td>
+        <td class="num" style="color: var(--ink-soft);">—</td>
+        <td class="num"><strong style="color: var(--good);">FREE</strong></td>
+        <td class="num" style="color: var(--ink-soft);">—</td>
+        <td class="num" style="color: var(--ink-soft);">—</td>
+        <td>${escapeHtml(comp.notes || '')}</td>
+        <td><button class="btn-ghost" data-del-comp="${escapeHtml(comp.compId)}">${escapeHtml(t('delete'))}</button></td>
       `;
       tbody.appendChild(tr);
       visibleCount++;
-    });
+    }
   }
+
   $('empty-state').style.display = visibleCount === 0 ? 'block' : 'none';
   tbody.querySelectorAll('[data-del]').forEach(btn => {
     btn.addEventListener('click', async () => {
@@ -2635,6 +2682,9 @@ function renderLog() {
       try { await deleteDoc(doc(db, 'sales', id)); }
       catch (e) { showToast(t('toastError') + e.message, true); }
     });
+  });
+  tbody.querySelectorAll('[data-del-comp]').forEach(btn => {
+    btn.addEventListener('click', () => removeComp(btn.getAttribute('data-del-comp')));
   });
 }
 function localizePayment(p, other) {
@@ -2845,6 +2895,7 @@ function startListeners() {
       renderCompsList();
       renderTableAssignments();
       renderTablesList();
+      renderLog();
     }, err => {
       showToast(t('toastError') + err.message, true);
       firstComps = true; check();
