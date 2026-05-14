@@ -542,8 +542,212 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  /* Buyer email callout */
+  .email-callout {
+    margin-top: 14px;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, #eff6ff, #dbeafe);
+    border: 1px solid #93c5fd;
+    border-radius: 10px;
+  }
+  .email-callout label {
+    font-size: 13px;
+    color: var(--accent);
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 700;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .email-callout label::before {
+    content: '✉️';
+    font-size: 18px;
+  }
+  .email-callout input[type="email"] {
+    font-size: 15px;
+    padding: 11px 12px;
+  }
+  .email-callout .hint {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 8px;
+  }
+
+  /* Event / EmailJS config */
+  .config-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .config-grid .full { grid-column: 1 / -1; }
+  .save-config-row {
+    margin-top: 12px;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  /* Virtual ticket view */
+  #view-ticket.active { justify-items: center; }
+  .ticket-card {
+    max-width: 480px;
+    width: 100%;
+    margin-top: 30px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(15,23,42,.12);
+    overflow: hidden;
+    border: 1px solid var(--line);
+  }
+  .ticket-header {
+    background: linear-gradient(135deg, #1e3a8a, #1d4ed8);
+    color: #fff;
+    padding: 22px 24px;
+    text-align: center;
+  }
+  .ticket-header .brand {
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: .85;
+    margin-bottom: 4px;
+  }
+  .ticket-header h2 {
+    margin: 0;
+    font-size: 22px;
+    color: #fff;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+  .ticket-header .event-meta {
+    margin-top: 10px;
+    font-size: 13px;
+    opacity: .9;
+  }
+  .ticket-body { padding: 22px 24px; }
+  .ticket-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px dashed var(--line);
+    font-size: 14px;
+  }
+  .ticket-row:last-child { border-bottom: none; }
+  .ticket-row .lbl { color: var(--ink-soft); font-weight: 600; }
+  .ticket-row .val { font-weight: 600; }
+  .ticket-lines {
+    margin: 14px 0;
+    padding: 14px;
+    background: #f8fafc;
+    border-radius: 10px;
+  }
+  .ticket-line {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    font-size: 14px;
+  }
+  .ticket-line .name { flex: 1; }
+  .ticket-line .qty { color: var(--ink-soft); margin: 0 12px; }
+  .ticket-line .amt { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .ticket-total {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 14px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 16px;
+    margin-bottom: 16px;
+  }
+  .ticket-qr {
+    text-align: center;
+    padding: 18px;
+    background: #f8fafc;
+    border-radius: 12px;
+  }
+  .ticket-qr img {
+    width: 180px;
+    height: 180px;
+    background: #fff;
+    padding: 8px;
+    border-radius: 8px;
+  }
+  .ticket-qr .qr-label {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .ticket-qr .qr-id {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-weight: 700;
+    margin-top: 4px;
+    font-size: 14px;
+  }
+  .ticket-actions {
+    margin-top: 16px;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .ticket-footer {
+    padding: 14px 24px;
+    background: #f8fafc;
+    border-top: 1px solid var(--line);
+    text-align: center;
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .ticket-error {
+    padding: 32px 24px;
+    text-align: center;
+    color: var(--bad);
+    font-weight: 600;
+  }
+
+  /* Sale-just-recorded popup (after successful submission) */
+  .post-sale-modal {
+    background: white;
+    border-radius: 14px;
+    padding: 24px;
+    max-width: 460px;
+    width: 100%;
+    box-shadow: 0 16px 48px rgba(0,0,0,.2);
+  }
+  .post-sale-modal h3 { margin: 0 0 6px 0; font-size: 18px; }
+  .post-sale-modal p { margin: 0 0 14px 0; color: var(--ink-soft); font-size: 14px; }
+  .post-sale-modal .ps-mini-qr {
+    text-align: center;
+    padding: 16px;
+    background: #f8fafc;
+    border-radius: 10px;
+    margin-bottom: 14px;
+  }
+  .post-sale-modal .ps-mini-qr img { width: 140px; height: 140px; }
+  .post-sale-modal .ps-link {
+    word-break: break-all;
+    font-size: 12px;
+    color: var(--accent);
+    margin-top: 8px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  @media print {
+    header.page, .header-controls, .conn-status, .lang-switch, .ticket-actions, .ticket-footer {
+      display: none !important;
+    }
+    body { background: white; }
+    .container { padding: 0; margin: 0; }
+    .ticket-card { box-shadow: none; border: 1px solid #ddd; margin-top: 0; }
+  }
+
   @media (max-width: 880px) {
-    .grid-3, .grid-4, .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .grid-3, .grid-4, .kpi-grid, .config-grid { grid-template-columns: repeat(2, 1fr); }
     .line-item { grid-template-columns: 1fr 80px 100px 36px; }
     .totals { grid-template-columns: 1fr; }
     .seller-row, .seller-add { grid-template-columns: 1fr; }
@@ -585,6 +789,14 @@
 
 <div class="container">
 
+  <!-- ============ TICKET VIEW (public, no login required) ============ -->
+  <section class="view" id="view-ticket">
+    <div class="ticket-card" id="ticket-card">
+      <div class="ticket-error" id="ticket-error" style="display:none;" data-i18n="ticketNotFound">Ticket not found.</div>
+      <div id="ticket-content"></div>
+    </div>
+  </section>
+
   <!-- ============ LOGIN VIEW ============ -->
   <section class="view active" id="view-login">
     <div class="card login-card">
@@ -614,11 +826,18 @@
       <h2 data-i18n="recordNewSale">Record New Sale</h2>
       <form id="sale-form" autocomplete="off">
 
-        <div class="grid-4">
-          <div>
-            <label for="buyer-name" data-i18n="buyerName">Buyer name</label>
-            <input type="text" id="buyer-name" required />
-          </div>
+        <div>
+          <label for="buyer-name" data-i18n="buyerName">Buyer name</label>
+          <input type="text" id="buyer-name" required />
+        </div>
+
+        <div class="email-callout">
+          <label for="buyer-email" data-i18n="buyerEmailProminent">Buyer email — sends them their virtual ticket</label>
+          <input type="email" id="buyer-email" data-i18n-placeholder="buyerEmailPlaceholder" placeholder="example@email.com" />
+          <div class="hint" data-i18n="buyerEmailHint">Optional but recommended. Leave blank if the buyer has no email — you can still share the ticket link manually.</div>
+        </div>
+
+        <div class="grid-3" style="margin-top:14px;">
           <div>
             <label data-i18n="dateOfSale">Date of sale</label>
             <div class="locked-field" id="locked-date">—</div>
@@ -733,6 +952,59 @@
     </div>
 
     <div class="card">
+      <h2 data-i18n="eventConfigTitle">Event & Ticket Settings</h2>
+      <div class="config-grid">
+        <div class="full">
+          <label for="cfg-public-url" data-i18n="cfgPublicUrl">Public app URL (used for QR codes and email links)</label>
+          <input type="url" id="cfg-public-url" data-i18n-placeholder="cfgPublicUrlPh" placeholder="https://yebouef.github.io/aico-tickets/" />
+        </div>
+        <div class="full">
+          <label for="cfg-event-name" data-i18n="cfgEventName">Event name</label>
+          <input type="text" id="cfg-event-name" data-i18n-placeholder="cfgEventNamePh" placeholder="e.g. AICO Annual Gala 2026" />
+        </div>
+        <div>
+          <label for="cfg-event-date" data-i18n="cfgEventDate">Event date</label>
+          <input type="text" id="cfg-event-date" data-i18n-placeholder="cfgEventDatePh" placeholder="e.g. June 15, 2026 — 7:00 PM" />
+        </div>
+        <div>
+          <label for="cfg-event-location" data-i18n="cfgEventLocation">Location</label>
+          <input type="text" id="cfg-event-location" data-i18n-placeholder="cfgEventLocationPh" placeholder="Venue / address" />
+        </div>
+        <div>
+          <label for="cfg-contact-email" data-i18n="cfgContactEmail">Contact email</label>
+          <input type="email" id="cfg-contact-email" data-i18n-placeholder="cfgContactEmailPh" placeholder="Shown on tickets" />
+        </div>
+        <div class="full">
+          <label for="cfg-archive-email" data-i18n="cfgArchiveEmail">AICO archive email (receives a copy of every sale)</label>
+          <input type="email" id="cfg-archive-email" data-i18n-placeholder="cfgArchiveEmailPh" placeholder="e.g. tickets@aico.org" />
+        </div>
+      </div>
+
+      <h2 style="margin-top:24px;" data-i18n="emailjsTitle">Email Settings (EmailJS)</h2>
+      <p style="margin: -6px 0 12px 0; font-size: 12px; color: var(--ink-soft);" data-i18n="emailjsHelp">
+        Required to send confirmation emails. Leave blank to disable email sending.
+      </p>
+      <div class="config-grid">
+        <div>
+          <label for="cfg-ejs-service" data-i18n="emailjsService">Service ID</label>
+          <input type="text" id="cfg-ejs-service" />
+        </div>
+        <div>
+          <label for="cfg-ejs-template" data-i18n="emailjsTemplate">Template ID</label>
+          <input type="text" id="cfg-ejs-template" />
+        </div>
+        <div>
+          <label for="cfg-ejs-public" data-i18n="emailjsPublic">Public key</label>
+          <input type="text" id="cfg-ejs-public" />
+        </div>
+      </div>
+
+      <div class="save-config-row">
+        <button type="button" class="btn-primary" id="save-config-btn" data-i18n="saveConfig">Save settings</button>
+      </div>
+    </div>
+
+    <div class="card">
       <h2 data-i18n="sellersTitle">Sellers</h2>
       <div id="sellers-list"></div>
       <div id="sellers-empty" class="empty" data-i18n="sellersEmpty" style="display:none;">No sellers yet. Add one below.</div>
@@ -790,6 +1062,24 @@
 
 <div class="toast" id="toast"></div>
 
+<div class="modal-backdrop" id="post-sale-modal">
+  <div class="post-sale-modal">
+    <h3 data-i18n="postSaleTitle">Sale recorded ✓</h3>
+    <p id="post-sale-summary" data-i18n="postSaleSubtitle">Here's the virtual ticket for the buyer.</p>
+    <div class="ps-mini-qr">
+      <img id="post-sale-qr" alt="QR code" />
+      <div style="margin-top:8px; font-weight:600;" id="post-sale-id"></div>
+      <div class="ps-link"><a id="post-sale-link" href="#" target="_blank" rel="noopener"></a></div>
+    </div>
+    <div id="post-sale-email-status" style="font-size: 12px; margin-bottom: 10px; color: var(--ink-soft);"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn-secondary" id="post-sale-copy" data-i18n="copyLink">Copy link</button>
+      <button type="button" class="btn-secondary" id="post-sale-open" data-i18n="openTicket">Open ticket</button>
+      <button type="button" class="btn-primary" id="post-sale-done" data-i18n="done">Done</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-backdrop" id="pw-modal">
   <div class="modal">
     <h3 data-i18n="pwTitle">Dashboard Access</h3>
@@ -811,8 +1101,10 @@ import {
 import {
   initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
   collection, doc, setDoc, deleteDoc, addDoc, onSnapshot, query, orderBy,
-  serverTimestamp, writeBatch, getDocs
+  serverTimestamp, writeBatch, getDocs, getDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
+import emailjs from "https://cdn.jsdelivr.net/npm/@emailjs/browser@4/+esm";
 
 // --- Firebase init ---
 const firebaseConfig = {
@@ -864,6 +1156,10 @@ const I18N = {
     adminLabel: 'Admin',
     recordNewSale: 'Record New Sale',
     buyerName: 'Buyer name',
+    buyerEmail: 'Buyer email (optional)',
+    buyerEmailProminent: 'Buyer email — sends them their virtual ticket',
+    buyerEmailHint: 'Optional but recommended. Leave blank if the buyer has no email — you can still share the ticket link manually.',
+    buyerEmailPlaceholder: 'example@email.com',
     dateOfSale: 'Date of sale',
     sellerName: 'Seller name',
     paymentMethod: 'Payment method',
@@ -948,7 +1244,45 @@ const I18N = {
     toastSellerAdded: 'Seller added.',
     toastSellerRemoved: 'Seller removed.',
     toastError: 'Something went wrong: ',
+    toastConfigSaved: 'Settings saved.',
+    toastEmailSent: 'Confirmation email sent.',
+    toastEmailFailed: 'Email could not be sent.',
+    toastLinkCopied: 'Link copied.',
     splashMsg: 'Connecting to the cloud...',
+    eventConfigTitle: 'Event & Ticket Settings',
+    cfgPublicUrl: 'Public app URL (used for QR codes and email links)',
+    cfgPublicUrlPh: 'https://yebouef.github.io/aico-tickets/',
+    cfgEventName: 'Event name',
+    cfgEventNamePh: 'e.g. AICO Annual Gala 2026',
+    cfgEventDate: 'Event date',
+    cfgEventDatePh: 'e.g. June 15, 2026 — 7:00 PM',
+    cfgEventLocation: 'Location',
+    cfgEventLocationPh: 'Venue / address',
+    cfgContactEmail: 'Contact email',
+    cfgContactEmailPh: 'Shown on tickets',
+    cfgArchiveEmail: 'AICO archive email (receives a copy of every sale)',
+    cfgArchiveEmailPh: 'e.g. tickets@aico.org',
+    emailjsTitle: 'Email Settings (EmailJS)',
+    emailjsHelp: 'Required to send confirmation emails. Leave blank to disable email sending.',
+    emailjsService: 'Service ID',
+    emailjsTemplate: 'Template ID',
+    emailjsPublic: 'Public key',
+    saveConfig: 'Save settings',
+    postSaleTitle: 'Sale recorded ✓',
+    postSaleSubtitle: 'Here is the virtual ticket for the buyer.',
+    copyLink: 'Copy link',
+    openTicket: 'Open ticket',
+    done: 'Done',
+    ticketNotFound: 'Ticket not found.',
+    tBrand: 'AICO Ticket',
+    tBuyer: 'Buyer',
+    tDate: 'Issued',
+    tSeller: 'Sold by',
+    tTotal: 'Total',
+    tQrLabel: 'Show this code at the door',
+    tSaleId: 'Sale ID',
+    tFooter: 'Please bring this ticket (printed or on your phone) to the event.',
+    tQty: 'Qty',
     locale: 'en-US',
   },
   fr: {
@@ -968,6 +1302,10 @@ const I18N = {
     adminLabel: 'Admin',
     recordNewSale: 'Enregistrer une nouvelle vente',
     buyerName: 'Nom de l’acheteur',
+    buyerEmail: 'Courriel de l’acheteur (facultatif)',
+    buyerEmailProminent: 'Courriel de l’acheteur — pour lui envoyer son billet virtuel',
+    buyerEmailHint: 'Facultatif mais recommandé. Laisser vide si l’acheteur n’a pas de courriel — vous pouvez toujours partager le lien du billet manuellement.',
+    buyerEmailPlaceholder: 'exemple@courriel.com',
     dateOfSale: 'Date de la vente',
     sellerName: 'Nom du vendeur',
     paymentMethod: 'Mode de paiement',
@@ -1052,7 +1390,45 @@ const I18N = {
     toastSellerAdded: 'Vendeur ajouté.',
     toastSellerRemoved: 'Vendeur retiré.',
     toastError: 'Une erreur est survenue : ',
+    toastConfigSaved: 'Paramètres enregistrés.',
+    toastEmailSent: 'Courriel de confirmation envoyé.',
+    toastEmailFailed: 'Échec de l’envoi du courriel.',
+    toastLinkCopied: 'Lien copié.',
     splashMsg: 'Connexion au cloud...',
+    eventConfigTitle: 'Paramètres de l’événement',
+    cfgPublicUrl: 'URL publique de l’application (pour les QR codes et liens des courriels)',
+    cfgPublicUrlPh: 'https://yebouef.github.io/aico-tickets/',
+    cfgEventName: 'Nom de l’événement',
+    cfgEventNamePh: 'ex. Gala annuel AICO 2026',
+    cfgEventDate: 'Date de l’événement',
+    cfgEventDatePh: 'ex. 15 juin 2026 — 19:00',
+    cfgEventLocation: 'Lieu',
+    cfgEventLocationPh: 'Salle / adresse',
+    cfgContactEmail: 'Courriel de contact',
+    cfgContactEmailPh: 'Affiché sur les billets',
+    cfgArchiveEmail: 'Courriel d’archive AICO (reçoit une copie de chaque vente)',
+    cfgArchiveEmailPh: 'ex. tickets@aico.org',
+    emailjsTitle: 'Paramètres courriel (EmailJS)',
+    emailjsHelp: 'Requis pour envoyer les courriels de confirmation. Laisser vide pour désactiver.',
+    emailjsService: 'ID de service',
+    emailjsTemplate: 'ID de modèle',
+    emailjsPublic: 'Clé publique',
+    saveConfig: 'Enregistrer',
+    postSaleTitle: 'Vente enregistrée ✓',
+    postSaleSubtitle: 'Voici le billet virtuel pour l’acheteur.',
+    copyLink: 'Copier le lien',
+    openTicket: 'Ouvrir le billet',
+    done: 'Terminé',
+    ticketNotFound: 'Billet introuvable.',
+    tBrand: 'Billet AICO',
+    tBuyer: 'Acheteur',
+    tDate: 'Émis le',
+    tSeller: 'Vendu par',
+    tTotal: 'Total',
+    tQrLabel: 'Présentez ce code à l’entrée',
+    tSaleId: 'ID de vente',
+    tFooter: 'Veuillez apporter ce billet (imprimé ou sur votre téléphone) à l’événement.',
+    tQty: 'Qté',
     locale: 'fr-FR',
   },
 };
@@ -1065,11 +1441,24 @@ const ADMIN_PASSWORD = 'AICO2026';
 let sales = [];
 let sellers = [];
 let inventory = 100;
+let appConfig = {
+  publicUrl: '',
+  eventName: '',
+  eventDate: '',
+  eventLocation: '',
+  contactEmail: '',
+  archiveEmail: '',
+  emailjsServiceId: '',
+  emailjsTemplateId: '',
+  emailjsPublicKey: '',
+};
 let lang = localStorage.getItem(LANG_KEY) || 'en';
 let currentUser = JSON.parse(sessionStorage.getItem(USER_KEY) || 'null');
 let dashUnlocked = false;
 let view = 'login';
 let firstLoadDone = false;
+let emailjsInitedKey = '';
+let currentTicketSaleId = null;
 
 // --- Helpers ---
 const $ = (id) => document.getElementById(id);
@@ -1135,6 +1524,7 @@ function applyLang() {
   refreshLoginNameOptions();
   renderSellersList();
   renderAll();
+  if (currentTicketSaleId) renderTicketView(currentTicketSaleId);
 }
 
 // --- Login / auth ---
@@ -1372,6 +1762,7 @@ function resetForm() {
   $('payment-other').style.display = 'none';
   $('payment-other').required = false;
   $('payment-other').value = '';
+  $('buyer-email').value = '';
   addLineItem();
   updateFormTotals();
 }
@@ -1400,6 +1791,7 @@ $('sale-form').addEventListener('submit', async (e) => {
     saleId,
     date: todayISO(),
     buyer: $('buyer-name').value.trim(),
+    buyerEmail: $('buyer-email').value.trim(),
     seller: currentUser.name,
     payment: paymentVal,
     paymentOther: paymentVal === 'Other' ? paymentOtherVal : '',
@@ -1424,6 +1816,7 @@ $('sale-form').addEventListener('submit', async (e) => {
     });
     resetForm();
     showToast(t('toastSaved'));
+    showPostSaleModal(sale);
   } catch (err) {
     showToast(t('toastError') + err.message, true);
   } finally {
@@ -1623,6 +2016,8 @@ $('new-seller-password').addEventListener('keydown', (e) => {
   if (e.key === 'Enter') { e.preventDefault(); addSeller(); }
 });
 
+$('save-config-btn').addEventListener('click', saveConfig);
+
 $('pw-cancel').addEventListener('click', hidePwModal);
 $('pw-submit').addEventListener('click', attemptUnlock);
 $('pw-input').addEventListener('keydown', (e) => {
@@ -1689,8 +2084,18 @@ function startListeners() {
           inventory = d.inventory;
           $('inventory-input').value = inventory;
         }
+        appConfig.publicUrl = d.publicUrl || '';
+        appConfig.eventName = d.eventName || '';
+        appConfig.eventDate = d.eventDate || '';
+        appConfig.eventLocation = d.eventLocation || '';
+        appConfig.contactEmail = d.contactEmail || '';
+        appConfig.archiveEmail = d.archiveEmail || '';
+        appConfig.emailjsServiceId = d.emailjsServiceId || '';
+        appConfig.emailjsTemplateId = d.emailjsTemplateId || '';
+        appConfig.emailjsPublicKey = d.emailjsPublicKey || '';
+        applyConfigToInputs();
+        tryInitEmailjs();
       } else {
-        // Seed default config
         setDoc(doc(db, 'config', 'app'), { inventory: 100 }, { merge: true })
           .catch(e => console.warn('Could not seed config', e));
       }
@@ -1701,6 +2106,306 @@ function startListeners() {
       firstConfig = true; check();
     });
   });
+}
+
+// --- Config inputs (admin dashboard) ---
+function applyConfigToInputs() {
+  if ($('cfg-public-url')) $('cfg-public-url').value = appConfig.publicUrl || '';
+  if ($('cfg-event-name')) $('cfg-event-name').value = appConfig.eventName || '';
+  if ($('cfg-event-date')) $('cfg-event-date').value = appConfig.eventDate || '';
+  if ($('cfg-event-location')) $('cfg-event-location').value = appConfig.eventLocation || '';
+  if ($('cfg-contact-email')) $('cfg-contact-email').value = appConfig.contactEmail || '';
+  if ($('cfg-archive-email')) $('cfg-archive-email').value = appConfig.archiveEmail || '';
+  if ($('cfg-ejs-service')) $('cfg-ejs-service').value = appConfig.emailjsServiceId || '';
+  if ($('cfg-ejs-template')) $('cfg-ejs-template').value = appConfig.emailjsTemplateId || '';
+  if ($('cfg-ejs-public')) $('cfg-ejs-public').value = appConfig.emailjsPublicKey || '';
+}
+
+async function saveConfig() {
+  const data = {
+    publicUrl: $('cfg-public-url').value.trim(),
+    eventName: $('cfg-event-name').value.trim(),
+    eventDate: $('cfg-event-date').value.trim(),
+    eventLocation: $('cfg-event-location').value.trim(),
+    contactEmail: $('cfg-contact-email').value.trim(),
+    archiveEmail: $('cfg-archive-email').value.trim(),
+    emailjsServiceId: $('cfg-ejs-service').value.trim(),
+    emailjsTemplateId: $('cfg-ejs-template').value.trim(),
+    emailjsPublicKey: $('cfg-ejs-public').value.trim(),
+  };
+  try {
+    await setDoc(doc(db, 'config', 'app'), data, { merge: true });
+    showToast(t('toastConfigSaved'));
+  } catch (e) {
+    showToast(t('toastError') + e.message, true);
+  }
+}
+
+function tryInitEmailjs() {
+  const key = appConfig.emailjsPublicKey;
+  if (key && key !== emailjsInitedKey) {
+    try {
+      emailjs.init({ publicKey: key });
+      emailjsInitedKey = key;
+    } catch (e) {
+      console.warn('EmailJS init failed:', e);
+    }
+  }
+}
+
+// --- URL helpers ---
+function ticketUrlFor(saleId) {
+  let base = (appConfig.publicUrl || '').trim();
+  // If admin hasn't set a public URL, fall back to the current page URL —
+  // but skip file:// since that won't work for anyone but the local viewer.
+  if (!base || /^file:/i.test(base)) {
+    if (/^file:/i.test(location.href)) {
+      // Last-resort fallback so the link isn't broken; admin should set publicUrl.
+      base = '';
+    } else {
+      base = location.origin + location.pathname;
+    }
+  }
+  if (!base) {
+    // Truly no usable base — return a relative URL.
+    return `?ticket=${encodeURIComponent(saleId)}`;
+  }
+  // Strip any existing query/hash from base
+  base = base.replace(/[?#].*$/, '');
+  const sep = base.endsWith('/') || /\.html?$/i.test(base) ? '?' : '/?';
+  // If base already ends with .html or /, use ? directly; else add / first
+  const url = /\.html?$/i.test(base) || base.endsWith('/')
+    ? `${base}?ticket=${encodeURIComponent(saleId)}`
+    : `${base}/?ticket=${encodeURIComponent(saleId)}`;
+  return url;
+}
+
+function getTicketIdFromUrl() {
+  const params = new URLSearchParams(location.search);
+  return params.get('ticket');
+}
+
+// --- QR generation ---
+async function makeQrDataUrl(text) {
+  try {
+    return await QRCode.toDataURL(text, {
+      errorCorrectionLevel: 'M',
+      margin: 1,
+      width: 360,
+      color: { dark: '#0f172a', light: '#ffffff' },
+    });
+  } catch (e) {
+    console.warn('QR generation failed', e);
+    return '';
+  }
+}
+
+// --- Email sending ---
+function emailjsConfigured() {
+  return !!(appConfig.emailjsServiceId && appConfig.emailjsTemplateId && appConfig.emailjsPublicKey);
+}
+
+function buildEmailParams(sale, recipientEmail) {
+  const ticketUrl = ticketUrlFor(sale.saleId);
+  const linesText = sale.lines.map(l => {
+    const c = CATEGORIES[l.cat];
+    const name = c ? t(c.i18nKey) : l.cat;
+    return `${l.qty} x ${name} — $${l.subtotal.toFixed(2)}`;
+  }).join('\n');
+  return {
+    to_email: recipientEmail,
+    buyer_name: sale.buyer || '',
+    buyer_email: sale.buyerEmail || '',
+    sale_id: sale.saleId,
+    event_name: appConfig.eventName || 'AICO Event',
+    event_date: appConfig.eventDate || '',
+    event_location: appConfig.eventLocation || '',
+    contact_email: appConfig.contactEmail || '',
+    ticket_url: ticketUrl,
+    total: '$' + sale.total.toFixed(2),
+    received: '$' + sale.received.toFixed(2),
+    balance: '$' + sale.balance.toFixed(2),
+    payment: localizePayment(sale.payment, sale.paymentOther),
+    tickets_summary: linesText,
+    seller: sale.seller,
+    sale_date: formatDate(sale.date),
+  };
+}
+
+async function sendOneEmail(recipientEmail, sale) {
+  if (!emailjsConfigured()) return { sent: false, reason: 'not-configured' };
+  if (!recipientEmail) return { sent: false, reason: 'no-recipient' };
+  tryInitEmailjs();
+  try {
+    await emailjs.send(
+      appConfig.emailjsServiceId,
+      appConfig.emailjsTemplateId,
+      buildEmailParams(sale, recipientEmail)
+    );
+    return { sent: true };
+  } catch (e) {
+    console.warn('Email send failed for', recipientEmail, e);
+    return { sent: false, reason: 'error', error: e };
+  }
+}
+
+// Sends to buyer (if email provided) AND to archive (if configured).
+// Returns { buyer, archive } each with { sent, reason }.
+async function sendAllEmails(sale) {
+  const results = { buyer: null, archive: null };
+  const tasks = [];
+  if (sale.buyerEmail) {
+    tasks.push(sendOneEmail(sale.buyerEmail, sale).then(r => results.buyer = r));
+  }
+  if (appConfig.archiveEmail) {
+    tasks.push(sendOneEmail(appConfig.archiveEmail, sale).then(r => results.archive = r));
+  }
+  await Promise.all(tasks);
+  return results;
+}
+
+// --- Post-sale modal (QR + share link) ---
+async function showPostSaleModal(sale) {
+  const url = ticketUrlFor(sale.saleId);
+  const qrDataUrl = await makeQrDataUrl(url);
+  $('post-sale-qr').src = qrDataUrl;
+  $('post-sale-id').textContent = sale.saleId;
+  const link = $('post-sale-link');
+  link.href = url;
+  link.textContent = url;
+  $('post-sale-summary').textContent = t('postSaleSubtitle');
+
+  // Show modal first, then attempt emails in background
+  const status = $('post-sale-email-status');
+  status.innerHTML = '';
+  $('post-sale-modal').classList.add('show');
+
+  if (emailjsConfigured() && (sale.buyerEmail || appConfig.archiveEmail)) {
+    status.innerHTML = '<div style="color:var(--ink-soft);">…</div>';
+    const results = await sendAllEmails(sale);
+    const lines = [];
+    if (results.buyer) {
+      if (results.buyer.sent) {
+        lines.push(`<div style="color:var(--good);">✉️ ${t('toastEmailSent')} → ${escapeHtml(sale.buyerEmail)}</div>`);
+      } else {
+        lines.push(`<div style="color:var(--bad);">⚠ ${t('toastEmailFailed')} → ${escapeHtml(sale.buyerEmail)}</div>`);
+      }
+    }
+    if (results.archive) {
+      if (results.archive.sent) {
+        lines.push(`<div style="color:var(--good);">📋 Archive copy sent → ${escapeHtml(appConfig.archiveEmail)}</div>`);
+      } else {
+        lines.push(`<div style="color:var(--bad);">⚠ Archive copy failed</div>`);
+      }
+    }
+    status.innerHTML = lines.join('');
+  }
+
+  $('post-sale-open').onclick = () => window.open(url, '_blank', 'noopener');
+  $('post-sale-copy').onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      showToast(t('toastLinkCopied'));
+    } catch (e) {
+      // Fallback: select & copy via temp input
+      const ta = document.createElement('textarea');
+      ta.value = url; document.body.appendChild(ta);
+      ta.select(); document.execCommand('copy'); ta.remove();
+      showToast(t('toastLinkCopied'));
+    }
+  };
+  $('post-sale-done').onclick = () => $('post-sale-modal').classList.remove('show');
+}
+
+// --- Public ticket view (when ?ticket=SALEID is in URL) ---
+async function renderTicketView(saleId) {
+  currentTicketSaleId = saleId;
+  $('ticket-error').style.display = 'none';
+  const content = $('ticket-content');
+  content.innerHTML = '<div style="padding:40px;text-align:center;color:var(--ink-soft);">Loading…</div>';
+
+  // Sign in anonymously (already done by boot, but ensure)
+  try { await signInAnonymously(auth); } catch (e) {}
+
+  let sale = null;
+  try {
+    const snap = await getDoc(doc(db, 'sales', saleId));
+    if (snap.exists()) sale = { ...snap.data(), _docId: snap.id };
+  } catch (e) {
+    console.warn('Ticket fetch failed', e);
+  }
+
+  // Also load config so we have event details
+  try {
+    const cfg = await getDoc(doc(db, 'config', 'app'));
+    if (cfg.exists()) {
+      const d = cfg.data();
+      appConfig.eventName = d.eventName || '';
+      appConfig.eventDate = d.eventDate || '';
+      appConfig.eventLocation = d.eventLocation || '';
+      appConfig.contactEmail = d.contactEmail || '';
+    }
+  } catch (e) { /* not fatal */ }
+
+  if (!sale) {
+    content.innerHTML = '';
+    $('ticket-error').style.display = 'block';
+    return;
+  }
+
+  const qrDataUrl = await makeQrDataUrl(ticketUrlFor(sale.saleId));
+
+  const linesHtml = sale.lines.map(l => {
+    const c = CATEGORIES[l.cat];
+    const name = c ? escapeHtml(t(c.i18nKey)) : escapeHtml(l.cat);
+    return `<div class="ticket-line">
+      <span class="name">${name}</span>
+      <span class="qty">${t('tQty')}: ${l.qty}</span>
+      <span class="amt">${fmt(l.subtotal)}</span>
+    </div>`;
+  }).join('');
+
+  const eventLine = [appConfig.eventDate, appConfig.eventLocation].filter(Boolean).join(' • ');
+
+  content.innerHTML = `
+    <div class="ticket-header">
+      <div class="brand">${escapeHtml(t('tBrand'))}</div>
+      <h2>${escapeHtml(appConfig.eventName || 'AICO')}</h2>
+      ${eventLine ? `<div class="event-meta">${escapeHtml(eventLine)}</div>` : ''}
+    </div>
+    <div class="ticket-body">
+      <div class="ticket-row"><span class="lbl">${escapeHtml(t('tBuyer'))}</span><span class="val">${escapeHtml(sale.buyer || '—')}</span></div>
+      <div class="ticket-row"><span class="lbl">${escapeHtml(t('tDate'))}</span><span class="val">${escapeHtml(formatDate(sale.date))}</span></div>
+      <div class="ticket-row"><span class="lbl">${escapeHtml(t('tSeller'))}</span><span class="val">${escapeHtml(sale.seller || '—')}</span></div>
+
+      <div class="ticket-lines">${linesHtml}</div>
+      <div class="ticket-total">
+        <span>${escapeHtml(t('tTotal'))}</span>
+        <span>${fmt(sale.total)}</span>
+      </div>
+
+      <div class="ticket-qr">
+        <img src="${qrDataUrl}" alt="QR" />
+        <div class="qr-label">${escapeHtml(t('tQrLabel'))}</div>
+        <div class="qr-id">${escapeHtml(t('tSaleId'))}: ${escapeHtml(sale.saleId)}</div>
+      </div>
+
+      <div class="ticket-actions">
+        <button type="button" class="btn-secondary" onclick="window.print()">🖨 Print</button>
+      </div>
+    </div>
+    <div class="ticket-footer">
+      ${escapeHtml(t('tFooter'))}
+      ${appConfig.contactEmail ? `<br><a href="mailto:${escapeHtml(appConfig.contactEmail)}" style="color:var(--accent);">${escapeHtml(appConfig.contactEmail)}</a>` : ''}
+    </div>
+  `;
+}
+
+function showTicketViewMode() {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  $('view-ticket').classList.add('active');
+  $('user-pill').style.display = 'none';
+  $('tabs').style.display = 'none';
 }
 
 async function boot() {
@@ -1721,6 +2426,15 @@ async function boot() {
       if (user) { unsub(); resolve(); }
     });
   });
+
+  // Public ticket view via ?ticket=SALEID — bypass everything else
+  const ticketId = getTicketIdFromUrl();
+  if (ticketId) {
+    hideSplash();
+    showTicketViewMode();
+    await renderTicketView(ticketId);
+    return;
+  }
 
   await startListeners();
   firstLoadDone = true;
