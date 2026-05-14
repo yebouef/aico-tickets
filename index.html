@@ -542,6 +542,130 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  /* Scanner view */
+  #view-scanner.active { justify-items: center; }
+  .scanner-wrap {
+    max-width: 600px;
+    width: 100%;
+  }
+  .scanner-video-wrap {
+    position: relative;
+    background: #0f172a;
+    border-radius: 14px;
+    overflow: hidden;
+    aspect-ratio: 1 / 1;
+    margin-bottom: 14px;
+  }
+  .scanner-video-wrap video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .scanner-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,.65);
+    font-size: 14px;
+    text-align: center;
+    padding: 20px;
+  }
+  .scanner-placeholder .icon { font-size: 48px; margin-bottom: 10px; }
+  .scanner-controls {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 14px;
+  }
+  .scan-result {
+    border-radius: 14px;
+    padding: 22px 20px;
+    margin-bottom: 14px;
+    text-align: center;
+    display: none;
+  }
+  .scan-result.show { display: block; }
+  .scan-result .big {
+    font-size: 28px;
+    font-weight: 800;
+    margin: 4px 0 6px 0;
+    letter-spacing: .5px;
+  }
+  .scan-result .who {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .scan-result .sub {
+    font-size: 14px;
+    opacity: .85;
+    margin-bottom: 14px;
+  }
+  .scan-result.valid {
+    background: var(--good-soft);
+    border: 2px solid var(--good);
+    color: var(--good);
+  }
+  .scan-result.used {
+    background: var(--bad-soft);
+    border: 2px solid var(--bad);
+    color: var(--bad);
+  }
+  .scan-result.invalid {
+    background: var(--warn-soft);
+    border: 2px solid var(--warn);
+    color: var(--warn);
+  }
+  .scan-result button {
+    margin-top: 6px;
+    background: white;
+    border: 2px solid currentColor;
+    color: inherit;
+    padding: 12px 24px;
+    font-size: 15px;
+    font-weight: 700;
+  }
+  .scan-result button.check-in-btn {
+    background: var(--good);
+    color: white;
+    border: 2px solid var(--good);
+    font-size: 18px;
+    padding: 14px 32px;
+  }
+  .scan-result button.check-in-btn:hover {
+    background: #065f46;
+  }
+  .manual-entry {
+    background: #f8fafc;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+  .manual-entry-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+  }
+  .recent-scan {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 13px;
+  }
+  .recent-scan:last-child { border-bottom: none; }
+  .recent-scan .left { font-weight: 600; }
+  .recent-scan .time {
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
   /* Buyer email callout */
   .email-callout {
     margin-top: 14px;
@@ -794,6 +918,43 @@
     <div class="ticket-card" id="ticket-card">
       <div class="ticket-error" id="ticket-error" style="display:none;" data-i18n="ticketNotFound">Ticket not found.</div>
       <div id="ticket-content"></div>
+    </div>
+  </section>
+
+  <!-- ============ SCANNER VIEW (door staff) ============ -->
+  <section class="view" id="view-scanner">
+    <div class="card scanner-wrap">
+      <h2 data-i18n="scannerTitle">Ticket Scanner</h2>
+      <p style="margin: -8px 0 14px 0; color: var(--ink-soft); font-size: 13px;" data-i18n="scannerSubtitle">
+        Point the camera at a ticket QR code to check it in.
+      </p>
+
+      <div class="scan-result" id="scan-result"></div>
+
+      <div class="scanner-video-wrap">
+        <video id="scanner-video" playsinline muted></video>
+        <div class="scanner-placeholder" id="scanner-placeholder">
+          <div class="icon">📷</div>
+          <div data-i18n="scannerStartHint">Tap "Start camera" to begin scanning.</div>
+        </div>
+      </div>
+
+      <div class="scanner-controls">
+        <button type="button" class="btn-primary" id="start-scan-btn" data-i18n="startCamera">▶ Start camera</button>
+        <button type="button" class="btn-secondary" id="stop-scan-btn" style="display:none;" data-i18n="stopCamera">⏸ Stop camera</button>
+      </div>
+
+      <div class="manual-entry">
+        <label for="manual-ticket-id" data-i18n="manualEntryLabel">Or enter ticket ID manually</label>
+        <div class="manual-entry-row">
+          <input type="text" id="manual-ticket-id" data-i18n-placeholder="manualEntryPh" placeholder="e.g. S12ABC34" />
+          <button type="button" class="btn-secondary" id="check-manual-btn" data-i18n="checkTicket">Check ticket</button>
+        </div>
+      </div>
+
+      <h2 style="margin-top: 20px;" data-i18n="recentScansTitle">Recent check-ins</h2>
+      <div id="recent-scans"></div>
+      <div id="recent-scans-empty" class="empty" data-i18n="recentScansEmpty">No check-ins yet.</div>
     </div>
   </section>
 
@@ -1105,6 +1266,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm";
 import emailjs from "https://cdn.jsdelivr.net/npm/@emailjs/browser@4/+esm";
+import QrScanner from "https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/+esm";
 
 // --- Firebase init ---
 const firebaseConfig = {
@@ -1274,6 +1436,29 @@ const I18N = {
     openTicket: 'Open ticket',
     done: 'Done',
     ticketNotFound: 'Ticket not found.',
+    tabScanner: 'Scanner',
+    scannerTitle: 'Ticket Scanner',
+    scannerSubtitle: 'Point the camera at a ticket QR code to check it in.',
+    scannerStartHint: 'Tap "Start camera" to begin scanning.',
+    startCamera: '▶ Start camera',
+    stopCamera: '⏸ Stop camera',
+    manualEntryLabel: 'Or enter ticket ID manually',
+    manualEntryPh: 'e.g. S12ABC34',
+    checkTicket: 'Check ticket',
+    recentScansTitle: 'Recent check-ins',
+    recentScansEmpty: 'No check-ins yet.',
+    scanValid: 'VALID',
+    scanUsed: 'ALREADY CHECKED IN',
+    scanInvalid: 'TICKET NOT FOUND',
+    scanCheckedInAt: 'Checked in at',
+    scanBy: 'by',
+    scanCheckInNow: 'CHECK IN',
+    scanContinue: 'Continue',
+    scanTryAgain: 'Try again',
+    scanCheckedInToast: '✓ Checked in',
+    scanCameraError: 'Could not start camera. Check browser permissions.',
+    scannerSignInTitle: 'Sign in to scan',
+    scannerNumTickets: '{n} ticket(s)',
     tBrand: 'AICO Ticket',
     tBuyer: 'Buyer',
     tDate: 'Issued',
@@ -1420,6 +1605,29 @@ const I18N = {
     openTicket: 'Ouvrir le billet',
     done: 'Terminé',
     ticketNotFound: 'Billet introuvable.',
+    tabScanner: 'Scanner',
+    scannerTitle: 'Scanner de billets',
+    scannerSubtitle: 'Pointez la caméra vers un QR code pour valider le billet.',
+    scannerStartHint: 'Appuyez sur « Démarrer la caméra » pour commencer.',
+    startCamera: '▶ Démarrer la caméra',
+    stopCamera: '⏸ Arrêter la caméra',
+    manualEntryLabel: 'Ou saisir l’ID du billet manuellement',
+    manualEntryPh: 'ex. S12ABC34',
+    checkTicket: 'Vérifier le billet',
+    recentScansTitle: 'Derniers passages',
+    recentScansEmpty: 'Aucun passage pour l’instant.',
+    scanValid: 'VALIDE',
+    scanUsed: 'DÉJÀ UTILISÉ',
+    scanInvalid: 'BILLET INTROUVABLE',
+    scanCheckedInAt: 'Validé à',
+    scanBy: 'par',
+    scanCheckInNow: 'VALIDER',
+    scanContinue: 'Continuer',
+    scanTryAgain: 'Réessayer',
+    scanCheckedInToast: '✓ Validé',
+    scanCameraError: 'Impossible de démarrer la caméra. Vérifiez les permissions du navigateur.',
+    scannerSignInTitle: 'Connexion pour scanner',
+    scannerNumTickets: '{n} billet(s)',
     tBrand: 'Billet AICO',
     tBuyer: 'Acheteur',
     tDate: 'Émis le',
@@ -1459,6 +1667,10 @@ let view = 'login';
 let firstLoadDone = false;
 let emailjsInitedKey = '';
 let currentTicketSaleId = null;
+let scannerMode = false;        // true if URL has ?mode=scan
+let qrScanner = null;            // QrScanner instance
+let scanResultLocked = false;    // when a result is showing, ignore new scans
+let recentScans = [];            // {saleId, buyer, time, status}[]
 
 // --- Helpers ---
 const $ = (id) => document.getElementById(id);
@@ -1565,13 +1777,18 @@ function attemptLogin() {
   $('login-password').value = '';
   saveUser();
   refreshAuthUI();
-  setView(currentUser.role === 'admin' ? 'dashboard' : 'sales');
+  if (scannerMode) {
+    showScannerViewMode();
+  } else {
+    setView(currentUser.role === 'admin' ? 'dashboard' : 'sales');
+  }
 }
 
 function logout() {
   currentUser = null;
   dashUnlocked = false;
   saveUser();
+  if (qrScanner) { try { qrScanner.stop(); } catch (e) {} }
   refreshAuthUI();
   setView('login');
 }
@@ -2018,6 +2235,19 @@ $('new-seller-password').addEventListener('keydown', (e) => {
 
 $('save-config-btn').addEventListener('click', saveConfig);
 
+// Scanner controls
+$('start-scan-btn').addEventListener('click', startScanner);
+$('stop-scan-btn').addEventListener('click', stopScanner);
+$('check-manual-btn').addEventListener('click', () => {
+  const id = $('manual-ticket-id').value.trim();
+  if (!id) return;
+  handleScannedTicket(extractSaleIdFromScan(id));
+  $('manual-ticket-id').value = '';
+});
+$('manual-ticket-id').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); $('check-manual-btn').click(); }
+});
+
 $('pw-cancel').addEventListener('click', hidePwModal);
 $('pw-submit').addEventListener('click', attemptUnlock);
 $('pw-input').addEventListener('keydown', (e) => {
@@ -2408,6 +2638,165 @@ function showTicketViewMode() {
   $('tabs').style.display = 'none';
 }
 
+// =============== SCANNER MODE ===============
+function extractSaleIdFromScan(raw) {
+  if (!raw) return '';
+  raw = String(raw).trim();
+  // If it's a URL with ?ticket=... param, extract it
+  try {
+    const u = new URL(raw);
+    const id = u.searchParams.get('ticket');
+    if (id) return id;
+  } catch (e) { /* not a URL */ }
+  // Otherwise treat the raw text as the sale ID directly
+  return raw;
+}
+
+function formatTime(d) {
+  return d.toLocaleTimeString(I18N[lang].locale, { hour: '2-digit', minute: '2-digit' });
+}
+
+function renderRecentScans() {
+  const wrap = $('recent-scans');
+  if (!wrap) return;
+  if (recentScans.length === 0) {
+    wrap.innerHTML = '';
+    $('recent-scans-empty').style.display = 'block';
+    return;
+  }
+  $('recent-scans-empty').style.display = 'none';
+  wrap.innerHTML = recentScans.slice(0, 12).map(s => `
+    <div class="recent-scan">
+      <span class="left">${escapeHtml(s.buyer || '—')} <span style="color:var(--ink-soft); font-weight:400;">· ${escapeHtml(s.saleId)}</span></span>
+      <span class="time">${escapeHtml(formatTime(s.time))}</span>
+    </div>
+  `).join('');
+}
+
+function addRecentScan(scan) {
+  recentScans.unshift(scan);
+  if (recentScans.length > 30) recentScans = recentScans.slice(0, 30);
+  renderRecentScans();
+}
+
+async function handleScannedTicket(saleId) {
+  if (scanResultLocked) return;
+  scanResultLocked = true;
+  const resEl = $('scan-result');
+  resEl.className = 'scan-result show';
+  resEl.innerHTML = `<div style="color:var(--ink-soft);">…</div>`;
+
+  let sale = null;
+  try {
+    const snap = await getDoc(doc(db, 'sales', saleId));
+    if (snap.exists()) sale = { ...snap.data(), _docId: snap.id };
+  } catch (e) {
+    console.warn('Lookup failed', e);
+  }
+
+  if (!sale) {
+    resEl.className = 'scan-result invalid show';
+    resEl.innerHTML = `
+      <div class="big">⚠ ${escapeHtml(t('scanInvalid'))}</div>
+      <div class="sub">${escapeHtml(saleId)}</div>
+      <button type="button" id="scan-dismiss">${escapeHtml(t('scanTryAgain'))}</button>
+    `;
+    $('scan-dismiss').onclick = clearScanResult;
+    return;
+  }
+
+  if (sale.scannedAt) {
+    // Already checked in — show LOUD red warning
+    const scannedDate = sale.scannedAt.toDate ? sale.scannedAt.toDate() : new Date(sale.scannedAt);
+    resEl.className = 'scan-result used show';
+    resEl.innerHTML = `
+      <div class="big">⛔ ${escapeHtml(t('scanUsed'))}</div>
+      <div class="who">${escapeHtml(sale.buyer || '—')}</div>
+      <div class="sub">${escapeHtml(t('scanCheckedInAt'))} ${escapeHtml(scannedDate.toLocaleString(I18N[lang].locale))}${sale.scannedBy ? ' ' + escapeHtml(t('scanBy')) + ' ' + escapeHtml(sale.scannedBy) : ''}</div>
+      <button type="button" id="scan-dismiss">${escapeHtml(t('scanContinue'))}</button>
+    `;
+    $('scan-dismiss').onclick = clearScanResult;
+    return;
+  }
+
+  // Valid — show green and offer Check In button
+  const totalTickets = (sale.lines || []).reduce((s,l) => s + l.qty, 0);
+  resEl.className = 'scan-result valid show';
+  resEl.innerHTML = `
+    <div class="big">✓ ${escapeHtml(t('scanValid'))}</div>
+    <div class="who">${escapeHtml(sale.buyer || '—')}</div>
+    <div class="sub">${escapeHtml(t('scannerNumTickets').replace('{n}', totalTickets))} · ${escapeHtml(sale.saleId)}</div>
+    <button type="button" class="check-in-btn" id="scan-checkin">${escapeHtml(t('scanCheckInNow'))}</button>
+  `;
+  $('scan-checkin').onclick = async () => {
+    const btn = $('scan-checkin');
+    btn.disabled = true;
+    try {
+      await setDoc(doc(db, 'sales', saleId), {
+        scannedAt: serverTimestamp(),
+        scannedBy: currentUser ? currentUser.name || t('adminLabel') : '',
+      }, { merge: true });
+      addRecentScan({ saleId, buyer: sale.buyer, time: new Date(), status: 'checked-in' });
+      showToast(t('scanCheckedInToast'));
+      clearScanResult();
+    } catch (e) {
+      showToast(t('toastError') + e.message, true);
+      btn.disabled = false;
+    }
+  };
+}
+
+function clearScanResult() {
+  scanResultLocked = false;
+  const resEl = $('scan-result');
+  resEl.className = 'scan-result';
+  resEl.innerHTML = '';
+}
+
+async function startScanner() {
+  try {
+    const video = $('scanner-video');
+    if (!qrScanner) {
+      qrScanner = new QrScanner(
+        video,
+        (result) => {
+          const saleId = extractSaleIdFromScan(result.data);
+          if (saleId) handleScannedTicket(saleId);
+        },
+        {
+          preferredCamera: 'environment',
+          highlightScanRegion: true,
+          highlightCodeOutline: true,
+          maxScansPerSecond: 3,
+        }
+      );
+    }
+    await qrScanner.start();
+    $('scanner-placeholder').style.display = 'none';
+    $('start-scan-btn').style.display = 'none';
+    $('stop-scan-btn').style.display = 'inline-flex';
+  } catch (e) {
+    console.warn('Camera start failed', e);
+    showToast(t('scanCameraError'), true);
+  }
+}
+
+async function stopScanner() {
+  if (qrScanner) {
+    await qrScanner.stop();
+  }
+  $('scanner-placeholder').style.display = 'flex';
+  $('start-scan-btn').style.display = 'inline-flex';
+  $('stop-scan-btn').style.display = 'none';
+}
+
+function showScannerViewMode() {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  $('view-scanner').classList.add('active');
+  $('tabs').style.display = 'none'; // no tabs in scanner mode
+  renderRecentScans();
+}
+
 async function boot() {
   $('inventory-input').value = inventory;
   addLineItem();
@@ -2436,9 +2825,23 @@ async function boot() {
     return;
   }
 
+  // Door scanner mode via ?mode=scan
+  const params = new URLSearchParams(location.search);
+  scannerMode = params.get('mode') === 'scan';
+
   await startListeners();
   firstLoadDone = true;
   hideSplash();
+
+  if (scannerMode) {
+    // Must be signed in to scan; sellers and admin both qualify
+    if (currentUser) {
+      showScannerViewMode();
+    } else {
+      setView('login');
+    }
+    return;
+  }
 
   if (currentUser) {
     if (currentUser.role === 'admin') {
