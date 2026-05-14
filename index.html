@@ -710,7 +710,42 @@
     margin-top: 12px;
     display: flex;
     justify-content: flex-end;
+    gap: 8px;
   }
+  .config-locked input[readonly],
+  .config-locked input[type="text"][readonly],
+  .config-locked input[type="email"][readonly],
+  .config-locked input[type="url"][readonly] {
+    background: #f1f5f9;
+    color: var(--ink-soft);
+    cursor: default;
+    border-style: dashed;
+  }
+  .config-locked input[readonly]:focus {
+    border-color: var(--line);
+    box-shadow: none;
+  }
+  .config-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .config-header h2 { margin: 0; }
+  .config-status {
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--ink-soft);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .config-status.locked::before { content: '🔒'; }
+  .config-status.editing { color: var(--accent); }
+  .config-status.editing::before { content: '✏️'; }
 
   /* Virtual ticket view */
   #view-ticket.active { justify-items: center; }
@@ -1113,8 +1148,11 @@
       </div>
     </div>
 
-    <div class="card">
-      <h2 data-i18n="eventConfigTitle">Event & Ticket Settings</h2>
+    <div class="card config-locked" id="config-card">
+      <div class="config-header">
+        <h2 data-i18n="eventConfigTitle">Event & Ticket Settings</h2>
+        <span class="config-status locked" id="config-status" data-i18n="configStatusLocked">Locked</span>
+      </div>
       <div class="config-grid">
         <div class="full">
           <label for="cfg-public-url" data-i18n="cfgPublicUrl">Public app URL (used for QR codes and email links)</label>
@@ -1162,7 +1200,9 @@
       </div>
 
       <div class="save-config-row">
-        <button type="button" class="btn-primary" id="save-config-btn" data-i18n="saveConfig">Save settings</button>
+        <button type="button" class="btn-secondary" id="edit-config-btn" data-i18n="editConfig">🔓 Edit settings</button>
+        <button type="button" class="btn-ghost" id="cancel-config-btn" style="display:none;" data-i18n="cancelConfig">Cancel</button>
+        <button type="button" class="btn-primary" id="save-config-btn" style="display:none;" data-i18n="saveConfig">Save settings</button>
       </div>
     </div>
 
@@ -1431,6 +1471,11 @@ const I18N = {
     emailjsTemplate: 'Template ID',
     emailjsPublic: 'Public key',
     saveConfig: 'Save settings',
+    editConfig: '🔓 Edit settings',
+    cancelConfig: 'Cancel',
+    configStatusLocked: 'Locked',
+    configStatusEditing: 'Editing',
+    confirmSaveConfig: 'Save these settings? They affect everyone using the app.',
     postSaleTitle: 'Sale recorded ✓',
     postSaleSubtitle: 'Here is the virtual ticket for the buyer.',
     copyLink: 'Copy link',
@@ -1601,6 +1646,11 @@ const I18N = {
     emailjsTemplate: 'ID de modèle',
     emailjsPublic: 'Clé publique',
     saveConfig: 'Enregistrer',
+    editConfig: '🔓 Modifier les paramètres',
+    cancelConfig: 'Annuler',
+    configStatusLocked: 'Verrouillé',
+    configStatusEditing: 'Modification',
+    confirmSaveConfig: 'Enregistrer ces paramètres ? Ils affectent toutes les personnes utilisant l’application.',
     postSaleTitle: 'Vente enregistrée ✓',
     postSaleSubtitle: 'Voici le billet virtuel pour l’acheteur.',
     copyLink: 'Copier le lien',
@@ -2260,6 +2310,11 @@ $('new-seller-password').addEventListener('keydown', (e) => {
 });
 
 $('save-config-btn').addEventListener('click', saveConfig);
+$('edit-config-btn').addEventListener('click', () => setConfigEditMode(true));
+$('cancel-config-btn').addEventListener('click', () => {
+  // Revert visible values back to what's in Firestore (appConfig)
+  applyConfigToInputs(); // this also re-locks
+});
 
 // Scanner controls
 $('start-scan-btn').addEventListener('click', startScanner);
@@ -2365,6 +2420,12 @@ function startListeners() {
 }
 
 // --- Config inputs (admin dashboard) ---
+function configInputIds() {
+  return ['cfg-public-url','cfg-event-name','cfg-event-date','cfg-event-location',
+          'cfg-contact-email','cfg-archive-email',
+          'cfg-ejs-service','cfg-ejs-template','cfg-ejs-public'];
+}
+
 function applyConfigToInputs() {
   if ($('cfg-public-url')) $('cfg-public-url').value = appConfig.publicUrl || '';
   if ($('cfg-event-name')) $('cfg-event-name').value = appConfig.eventName || '';
@@ -2375,9 +2436,38 @@ function applyConfigToInputs() {
   if ($('cfg-ejs-service')) $('cfg-ejs-service').value = appConfig.emailjsServiceId || '';
   if ($('cfg-ejs-template')) $('cfg-ejs-template').value = appConfig.emailjsTemplateId || '';
   if ($('cfg-ejs-public')) $('cfg-ejs-public').value = appConfig.emailjsPublicKey || '';
+  // Always lock the form when fresh data arrives from Firestore
+  setConfigEditMode(false);
+}
+
+function setConfigEditMode(on) {
+  const card = $('config-card');
+  if (!card) return;
+  configInputIds().forEach(id => {
+    const el = $(id);
+    if (!el) return;
+    if (on) el.removeAttribute('readonly');
+    else el.setAttribute('readonly', 'readonly');
+  });
+  if (on) {
+    card.classList.remove('config-locked');
+    $('config-status').className = 'config-status editing';
+    $('config-status').textContent = t('configStatusEditing');
+    $('edit-config-btn').style.display = 'none';
+    $('cancel-config-btn').style.display = 'inline-flex';
+    $('save-config-btn').style.display = 'inline-flex';
+  } else {
+    card.classList.add('config-locked');
+    $('config-status').className = 'config-status locked';
+    $('config-status').textContent = t('configStatusLocked');
+    $('edit-config-btn').style.display = 'inline-flex';
+    $('cancel-config-btn').style.display = 'none';
+    $('save-config-btn').style.display = 'none';
+  }
 }
 
 async function saveConfig() {
+  if (!confirm(t('confirmSaveConfig'))) return;
   const data = {
     publicUrl: $('cfg-public-url').value.trim(),
     eventName: $('cfg-event-name').value.trim(),
@@ -2391,6 +2481,7 @@ async function saveConfig() {
   };
   try {
     await setDoc(doc(db, 'config', 'app'), data, { merge: true });
+    setConfigEditMode(false);
     showToast(t('toastConfigSaved'));
   } catch (e) {
     showToast(t('toastError') + e.message, true);
