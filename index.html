@@ -726,6 +726,41 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* Complimentary tickets */
+  .comp-row {
+    display: grid;
+    grid-template-columns: 1.3fr 1.5fr 70px 1fr 90px;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 12px;
+    background: #f8fafc;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    margin-bottom: 6px;
+    font-size: 13px;
+  }
+  .comp-row .name { font-weight: 700; }
+  .comp-row .notes { color: var(--ink-soft); font-style: italic; font-size: 12px; }
+  .comp-row .guests-count { text-align: center; font-weight: 600; color: var(--ink-soft); }
+  .comp-add {
+    display: grid;
+    grid-template-columns: 1fr 1fr 80px 1fr auto;
+    gap: 10px;
+    align-items: end;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--line);
+  }
+  .comp-actions {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+  }
+  .comp-actions button {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
   /* Tables setup */
   .tables-list-grid {
     display: grid;
@@ -1414,6 +1449,34 @@
     </div>
 
     <div class="card">
+      <h2 data-i18n="compsTitle">Complimentary Tickets (VIPs &amp; Guests)</h2>
+      <p style="margin: -6px 0 14px 0; font-size: 12px; color: var(--ink-soft);" data-i18n="compsHelp">
+        Free tickets for VIPs, sponsors, board members, etc. They don't affect sales totals but still get QR codes and can be assigned to tables.
+      </p>
+      <div id="comps-list"></div>
+      <div id="comps-empty" class="empty" data-i18n="compsEmpty" style="display:none;">No complimentary tickets yet.</div>
+      <div class="comp-add">
+        <div>
+          <label for="new-comp-name" data-i18n="compName">Guest name</label>
+          <input type="text" id="new-comp-name" data-i18n-placeholder="compNamePh" placeholder="e.g. John Sponsor" />
+        </div>
+        <div>
+          <label for="new-comp-email" data-i18n="compEmail">Email (optional)</label>
+          <input type="email" id="new-comp-email" data-i18n-placeholder="compEmailPh" placeholder="To send their ticket" />
+        </div>
+        <div>
+          <label for="new-comp-guests" data-i18n="compGuests">Guests</label>
+          <input type="number" id="new-comp-guests" min="1" value="1" />
+        </div>
+        <div>
+          <label for="new-comp-notes" data-i18n="compNotes">Notes</label>
+          <input type="text" id="new-comp-notes" data-i18n-placeholder="compNotesPh" placeholder="e.g. Platinum sponsor" />
+        </div>
+        <button type="button" class="btn-primary" id="add-comp-btn" data-i18n="addComp">+ Add comp</button>
+      </div>
+    </div>
+
+    <div class="card">
       <h2 data-i18n="tablesSetupTitle">Tables Setup</h2>
       <p style="margin: -6px 0 14px 0; font-size: 12px; color: var(--ink-soft);" data-i18n="tablesSetupHelp">
         Define each table and its seat capacity. Add tables as you figure out the layout.
@@ -1635,6 +1698,25 @@ const I18N = {
     outstandingBalance: 'Outstanding Balance',
     initialInventory: 'Initial Inventory',
     adjustIfNeeded: 'Adjust if needed',
+    compsTitle: 'Complimentary Tickets (VIPs & Guests)',
+    compsHelp: 'Free tickets for VIPs, sponsors, board members, etc. They don\'t affect sales totals but still get QR codes and can be assigned to tables.',
+    compsEmpty: 'No complimentary tickets yet.',
+    compName: 'Guest name',
+    compNamePh: 'e.g. John Sponsor',
+    compEmail: 'Email (optional)',
+    compEmailPh: 'To send their ticket',
+    compGuests: 'Guests',
+    compNotes: 'Notes',
+    compNotesPh: 'e.g. Platinum sponsor',
+    addComp: '+ Add comp',
+    compResend: 'Resend email',
+    compRemove: 'Remove',
+    confirmRemoveComp: 'Remove complimentary ticket for "{name}"?',
+    alertCompInvalid: 'Please provide at least a name.',
+    toastCompAdded: 'Complimentary ticket created.',
+    toastCompRemoved: 'Complimentary ticket removed.',
+    toastCompResent: 'Email resent.',
+    compTypeLabel: 'Comp',
     tablesSetupTitle: 'Tables Setup',
     tablesSetupHelp: 'Define each table and its seat capacity. Add tables as you figure out the layout.',
     tablesEmpty: 'No tables yet. Add some below.',
@@ -1860,6 +1942,25 @@ const I18N = {
     outstandingBalance: 'Solde impayé',
     initialInventory: 'Inventaire initial',
     adjustIfNeeded: 'Ajuster au besoin',
+    compsTitle: 'Billets de courtoisie (VIPs et invités)',
+    compsHelp: 'Billets gratuits pour les VIPs, sponsors, membres du conseil, etc. Ils n’affectent pas les ventes mais reçoivent un QR code et peuvent être placés à une table.',
+    compsEmpty: 'Aucun billet de courtoisie pour l’instant.',
+    compName: 'Nom de l’invité',
+    compNamePh: 'ex. Jean Sponsor',
+    compEmail: 'Courriel (facultatif)',
+    compEmailPh: 'Pour envoyer son billet',
+    compGuests: 'Invités',
+    compNotes: 'Notes',
+    compNotesPh: 'ex. Sponsor Platine',
+    addComp: '+ Ajouter',
+    compResend: 'Renvoyer courriel',
+    compRemove: 'Retirer',
+    confirmRemoveComp: 'Retirer le billet de courtoisie de « {name} » ?',
+    alertCompInvalid: 'Veuillez fournir au moins un nom.',
+    toastCompAdded: 'Billet de courtoisie créé.',
+    toastCompRemoved: 'Billet de courtoisie retiré.',
+    toastCompResent: 'Courriel renvoyé.',
+    compTypeLabel: 'Cour.',
     tablesSetupTitle: 'Configuration des tables',
     tablesSetupHelp: 'Définissez chaque table et sa capacité. Ajoutez des tables au fur et à mesure.',
     tablesEmpty: 'Aucune table. Ajoutez-en ci-dessous.',
@@ -2032,6 +2133,7 @@ const ADMIN_PASSWORD = 'AICO2026';
 
 let sales = [];
 let sellers = [];
+let comps = []; // complimentary tickets (VIPs / guests)
 let inventory = 100;
 let appConfig = {
   publicUrl: '',
@@ -2073,6 +2175,7 @@ const formatDate = (iso) => {
   return dt.toLocaleDateString(I18N[lang].locale, { year:'numeric', month:'long', day:'numeric' });
 };
 const uid = () => 'S' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2,5).toUpperCase();
+const compUid = () => 'C' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2,5).toUpperCase();
 const escapeHtml = (s) => String(s ?? '').replace(/[&<>"']/g, c =>
   ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
@@ -2646,6 +2749,12 @@ $('new-seller-password').addEventListener('keydown', (e) => {
 $('save-config-btn').addEventListener('click', saveConfig);
 $('edit-config-btn').addEventListener('click', () => setConfigEditMode(true));
 
+// Complimentary tickets
+$('add-comp-btn').addEventListener('click', addComp);
+$('new-comp-notes').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); addComp(); }
+});
+
 // Tables setup
 $('add-table-btn').addEventListener('click', addTable);
 $('new-table-capacity').addEventListener('keydown', (e) => {
@@ -2698,8 +2807,8 @@ function hideSplash() {
 
 function startListeners() {
   return new Promise((resolve) => {
-    let firstSales = false, firstSellers = false, firstConfig = false;
-    function check() { if (firstSales && firstSellers && firstConfig) resolve(); }
+    let firstSales = false, firstSellers = false, firstConfig = false, firstComps = false;
+    function check() { if (firstSales && firstSellers && firstConfig && firstComps) resolve(); }
 
     onSnapshot(query(collection(db, 'sales'), orderBy('createdAt', 'desc')), snap => {
       sales = snap.docs.map(d => {
@@ -2728,6 +2837,17 @@ function startListeners() {
     }, err => {
       showToast(t('toastError') + err.message, true);
       firstSellers = true; check();
+    });
+
+    onSnapshot(query(collection(db, 'comps'), orderBy('createdAt', 'desc')), snap => {
+      comps = snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
+      firstComps = true; check();
+      renderCompsList();
+      renderTableAssignments();
+      renderTablesList();
+    }, err => {
+      showToast(t('toastError') + err.message, true);
+      firstComps = true; check();
     });
 
     onSnapshot(doc(db, 'config', 'app'), snap => {
@@ -2995,8 +3115,8 @@ async function showPostSaleModal(sale) {
 }
 
 // --- Public ticket view (when ?ticket=SALEID is in URL) ---
-async function renderTicketView(saleId) {
-  currentTicketSaleId = saleId;
+async function renderTicketView(ticketId) {
+  currentTicketSaleId = ticketId;
   $('ticket-error').style.display = 'none';
   const content = $('ticket-content');
   content.innerHTML = '<div style="padding:40px;text-align:center;color:var(--ink-soft);">Loading…</div>';
@@ -3004,12 +3124,32 @@ async function renderTicketView(saleId) {
   // Sign in anonymously (already done by boot, but ensure)
   try { await signInAnonymously(auth); } catch (e) {}
 
+  const isComp = ticketId.startsWith('C');
   let sale = null;
   try {
-    const snap = await getDoc(doc(db, 'sales', saleId));
+    const snap = await getDoc(doc(db, isComp ? 'comps' : 'sales', ticketId));
     if (snap.exists()) sale = { ...snap.data(), _docId: snap.id };
   } catch (e) {
     console.warn('Ticket fetch failed', e);
+  }
+
+  // Normalize comp into a sale-like shape for the renderer below
+  if (sale && isComp) {
+    sale = {
+      ...sale,
+      saleId: sale.compId,
+      buyer: sale.name,
+      seller: '',
+      date: sale.createdAt && sale.createdAt.toDate ? sale.createdAt.toDate().toISOString().slice(0,10) : todayISO(),
+      lines: [{
+        cat: '__COMP__',
+        qty: sale.guests || 1,
+        unit: 0,
+        subtotal: 0,
+      }],
+      total: 0,
+      _isComp: true,
+    };
   }
 
   // Also load config so we have event details
@@ -3032,34 +3172,50 @@ async function renderTicketView(saleId) {
 
   const qrDataUrl = await makeQrDataUrl(ticketUrlFor(sale.saleId));
 
-  const linesHtml = sale.lines.map(l => {
-    const c = CATEGORIES[l.cat];
-    const name = c ? escapeHtml(t(c.i18nKey)) : escapeHtml(l.cat);
-    return `<div class="ticket-line">
-      <span class="name">${name}</span>
-      <span class="qty">${t('tQty')}: ${l.qty}</span>
-      <span class="amt">${fmt(l.subtotal)}</span>
-    </div>`;
-  }).join('');
+  const linesHtml = sale._isComp
+    ? `<div class="ticket-line">
+         <span class="name"><strong>Complimentary access</strong></span>
+         <span class="qty">${t('tQty')}: ${sale.lines[0]?.qty || 1}</span>
+         <span class="amt" style="color: var(--good); font-weight: 700;">FREE</span>
+       </div>`
+    : sale.lines.map(l => {
+        const c = CATEGORIES[l.cat];
+        const name = c ? escapeHtml(t(c.i18nKey)) : escapeHtml(l.cat);
+        return `<div class="ticket-line">
+          <span class="name">${name}</span>
+          <span class="qty">${t('tQty')}: ${l.qty}</span>
+          <span class="amt">${fmt(l.subtotal)}</span>
+        </div>`;
+      }).join('');
+
+  const totalRowHtml = sale._isComp
+    ? `<div class="ticket-total"><span>${escapeHtml(t('tTotal'))}</span><span style="color: var(--good);">COMPLIMENTARY</span></div>`
+    : `<div class="ticket-total"><span>${escapeHtml(t('tTotal'))}</span><span>${fmt(sale.total)}</span></div>`;
+
+  const sellerRowHtml = sale._isComp
+    ? ''
+    : `<div class="ticket-row"><span class="lbl">${escapeHtml(t('tSeller'))}</span><span class="val">${escapeHtml(sale.seller || '—')}</span></div>`;
+
+  const tableRowHtml = sale.tableName
+    ? `<div class="ticket-row" style="background: var(--accent-soft); padding: 10px 12px; border-radius: 8px; margin-top: 4px; border-bottom: none;"><span class="lbl" style="color: var(--accent);">${escapeHtml(t('scanTableLabel'))}</span><span class="val" style="color: var(--accent); font-size: 18px;">${escapeHtml(sale.tableName)}</span></div>`
+    : '';
 
   const eventLine = [appConfig.eventDate, appConfig.eventLocation].filter(Boolean).join(' • ');
 
   content.innerHTML = `
     <div class="ticket-header">
-      <div class="brand">${escapeHtml(t('tBrand'))}</div>
+      <div class="brand">${escapeHtml(t('tBrand'))}${sale._isComp ? ' · COMPLIMENTARY' : ''}</div>
       <h2>${escapeHtml(appConfig.eventName || 'AICO')}</h2>
       ${eventLine ? `<div class="event-meta">${escapeHtml(eventLine)}</div>` : ''}
     </div>
     <div class="ticket-body">
       <div class="ticket-row"><span class="lbl">${escapeHtml(t('tBuyer'))}</span><span class="val">${escapeHtml(sale.buyer || '—')}</span></div>
       <div class="ticket-row"><span class="lbl">${escapeHtml(t('tDate'))}</span><span class="val">${escapeHtml(formatDate(sale.date))}</span></div>
-      <div class="ticket-row"><span class="lbl">${escapeHtml(t('tSeller'))}</span><span class="val">${escapeHtml(sale.seller || '—')}</span></div>
+      ${sellerRowHtml}
+      ${tableRowHtml}
 
       <div class="ticket-lines">${linesHtml}</div>
-      <div class="ticket-total">
-        <span>${escapeHtml(t('tTotal'))}</span>
-        <span>${fmt(sale.total)}</span>
-      </div>
+      ${totalRowHtml}
 
       <div class="ticket-qr">
         <img src="${qrDataUrl}" alt="QR" />
@@ -3078,15 +3234,131 @@ async function renderTicketView(saleId) {
   `;
 }
 
+// =============== COMPLIMENTARY TICKETS ===============
+function renderCompsList() {
+  const wrap = $('comps-list');
+  if (!wrap) return;
+  if (comps.length === 0) {
+    wrap.innerHTML = '';
+    $('comps-empty').style.display = 'block';
+    return;
+  }
+  $('comps-empty').style.display = 'none';
+  wrap.innerHTML = comps.map(c => `
+    <div class="comp-row">
+      <div>
+        <div class="name">${escapeHtml(c.name || '—')}</div>
+        ${c.notes ? `<div class="notes">${escapeHtml(c.notes)}</div>` : ''}
+      </div>
+      <div>${escapeHtml(c.email || '—')}</div>
+      <div class="guests-count">${c.guests || 1}</div>
+      <div>${c.tableName ? `<strong>${escapeHtml(c.tableName)}</strong>` : '<span style="color:var(--warn);">—</span>'}</div>
+      <div class="comp-actions">
+        ${c.email ? `<button type="button" class="btn-secondary" data-resend-comp="${escapeHtml(c.compId)}">${escapeHtml(t('compResend'))}</button>` : ''}
+        <button type="button" class="btn-danger" data-rm-comp="${escapeHtml(c.compId)}">${escapeHtml(t('compRemove'))}</button>
+      </div>
+    </div>
+  `).join('');
+  wrap.querySelectorAll('[data-rm-comp]').forEach(btn => {
+    btn.addEventListener('click', () => removeComp(btn.getAttribute('data-rm-comp')));
+  });
+  wrap.querySelectorAll('[data-resend-comp]').forEach(btn => {
+    btn.addEventListener('click', () => resendCompEmail(btn.getAttribute('data-resend-comp')));
+  });
+}
+
+async function addComp() {
+  const name = $('new-comp-name').value.trim();
+  const email = $('new-comp-email').value.trim();
+  const guests = Math.max(1, parseInt($('new-comp-guests').value, 10) || 1);
+  const notes = $('new-comp-notes').value.trim();
+  if (!name) { alert(t('alertCompInvalid')); return; }
+  const compId = compUid();
+  const compData = {
+    compId, name, email, guests, notes,
+    tableName: '',
+    createdAt: serverTimestamp(),
+  };
+  try {
+    await setDoc(doc(db, 'comps', compId), compData);
+    $('new-comp-name').value = '';
+    $('new-comp-email').value = '';
+    $('new-comp-guests').value = '1';
+    $('new-comp-notes').value = '';
+    showToast(t('toastCompAdded'));
+    // Auto-send email if provided
+    if (email) sendCompEmail({ ...compData, createdAt: new Date() });
+  } catch (e) {
+    showToast(t('toastError') + e.message, true);
+  }
+}
+
+async function removeComp(compId) {
+  const c = comps.find(x => x.compId === compId);
+  if (!c) return;
+  if (!confirm(t('confirmRemoveComp').replace('{name}', c.name))) return;
+  try {
+    await deleteDoc(doc(db, 'comps', compId));
+    showToast(t('toastCompRemoved'));
+  } catch (e) {
+    showToast(t('toastError') + e.message, true);
+  }
+}
+
+async function resendCompEmail(compId) {
+  const c = comps.find(x => x.compId === compId);
+  if (!c || !c.email) return;
+  const res = await sendCompEmail(c);
+  if (res.sent) showToast(t('toastCompResent'));
+  else showToast(t('toastEmailFailed'), true);
+}
+
+async function sendCompEmail(comp) {
+  if (!emailjsConfigured() || !comp.email) return { sent: false };
+  tryInitEmailjs();
+  const ticketUrl = ticketUrlFor(comp.compId);
+  const params = {
+    to_email: comp.email,
+    buyer_name: comp.name || '',
+    buyer_email: comp.email,
+    sale_id: comp.compId,
+    event_name: appConfig.eventName || 'AICO Event',
+    event_date: appConfig.eventDate || '',
+    event_location: appConfig.eventLocation || '',
+    contact_email: appConfig.contactEmail || '',
+    ticket_url: ticketUrl,
+    total: 'Complimentary',
+    received: 'Complimentary',
+    balance: '$0.00',
+    payment: 'Complimentary',
+    tickets_summary: `Complimentary access for ${comp.guests || 1} guest(s)`,
+    seller: t('adminLabel'),
+    sale_date: formatDate(todayISO()),
+    table_name: comp.tableName || '',
+  };
+  try {
+    await emailjs.send(appConfig.emailjsServiceId, appConfig.emailjsTemplateId, params);
+    return { sent: true };
+  } catch (e) {
+    console.warn('Comp email failed', e);
+    return { sent: false, error: e };
+  }
+}
+
 // =============== TABLES ===============
 function seatsUsedAtTable(tableName) {
-  return sales.reduce((sum, s) => {
+  const fromSales = sales.reduce((sum, s) => {
     if (s.tableName === tableName) {
       const guests = (s.lines || []).reduce((g, l) => g + l.qty, 0);
       return sum + guests;
     }
     return sum;
   }, 0);
+  const fromComps = comps.reduce((sum, c) => {
+    if (c.tableName === tableName) return sum + (Number(c.guests) || 1);
+    return sum;
+  }, 0);
+  return fromSales + fromComps;
 }
 
 function renderTablesList() {
@@ -3189,6 +3461,15 @@ async function setSaleTable(saleId, tableName) {
   }
 }
 
+async function setCompTable(compId, tableName) {
+  try {
+    await setDoc(doc(db, 'comps', compId), { tableName: tableName || '' }, { merge: true });
+    showToast(t('toastTableSaved'));
+  } catch (e) {
+    showToast(t('toastError') + e.message, true);
+  }
+}
+
 function renderTableAssignments() {
   const wrap = $('assignments-list');
   if (!wrap) return;
@@ -3196,13 +3477,31 @@ function renderTableAssignments() {
   const filter = $('assign-filter')?.value || 'all';
   const tables = appConfig.tables || [];
 
-  let visible = sales.slice();
-  if (search) visible = visible.filter(s => `${s.buyer} ${s.saleId}`.toLowerCase().includes(search));
-  if (filter === 'unassigned') visible = visible.filter(s => !s.tableName);
-  if (filter === 'assigned') visible = visible.filter(s => !!s.tableName);
+  // Combine sales and comps into one unified list
+  const combined = [
+    ...sales.map(s => ({
+      kind: 'sale',
+      id: s.saleId,
+      name: s.buyer || '—',
+      guests: (s.lines || []).reduce((g, l) => g + l.qty, 0),
+      tableName: s.tableName || '',
+    })),
+    ...comps.map(c => ({
+      kind: 'comp',
+      id: c.compId,
+      name: c.name || '—',
+      guests: Number(c.guests) || 1,
+      tableName: c.tableName || '',
+    })),
+  ];
 
-  const totalAssigned = sales.filter(s => s.tableName).length;
-  const totalUnassigned = sales.length - totalAssigned;
+  let visible = combined;
+  if (search) visible = visible.filter(x => `${x.name} ${x.id}`.toLowerCase().includes(search));
+  if (filter === 'unassigned') visible = visible.filter(x => !x.tableName);
+  if (filter === 'assigned') visible = visible.filter(x => !!x.tableName);
+
+  const totalAssigned = combined.filter(x => x.tableName).length;
+  const totalUnassigned = combined.length - totalAssigned;
   $('assign-summary-assigned').textContent = totalAssigned;
   $('assign-summary-unassigned').textContent = totalUnassigned;
   $('assign-summary-tables').textContent = tables.length;
@@ -3225,21 +3524,26 @@ function renderTableAssignments() {
     return opts.join('');
   };
 
-  wrap.innerHTML = visible.map(s => {
-    const guests = (s.lines || []).reduce((g, l) => g + l.qty, 0);
+  wrap.innerHTML = visible.map(item => {
+    const compBadge = item.kind === 'comp'
+      ? `<span style="background:var(--warn-soft); color:var(--warn); padding:1px 6px; border-radius:4px; font-size:10px; font-weight:700; margin-left:6px;">${escapeHtml(t('compTypeLabel'))}</span>`
+      : '';
     return `
-      <div class="assignment-row ${s.tableName ? '' : 'unassigned'}">
-        <div class="buyer">${escapeHtml(s.buyer || '—')}</div>
-        <div class="guests">${guests} · ${t('scanGuests').replace('{n}', '').replace('(', '').replace(')', '').trim() || 'guests'}</div>
-        <div class="sale-id">${escapeHtml(s.saleId)}</div>
-        <select data-assign="${escapeHtml(s.saleId)}">${tableOptions(s.tableName || '')}</select>
+      <div class="assignment-row ${item.tableName ? '' : 'unassigned'}">
+        <div class="buyer">${escapeHtml(item.name)}${compBadge}</div>
+        <div class="guests">${item.guests}</div>
+        <div class="sale-id">${escapeHtml(item.id)}</div>
+        <select data-assign="${escapeHtml(item.id)}" data-kind="${item.kind}">${tableOptions(item.tableName || '')}</select>
       </div>
     `;
   }).join('');
 
   wrap.querySelectorAll('[data-assign]').forEach(sel => {
     sel.addEventListener('change', () => {
-      setSaleTable(sel.getAttribute('data-assign'), sel.value);
+      const id = sel.getAttribute('data-assign');
+      const kind = sel.getAttribute('data-kind');
+      if (kind === 'comp') setCompTable(id, sel.value);
+      else setSaleTable(id, sel.value);
     });
   });
 }
@@ -3305,6 +3609,23 @@ function ticketLinesHtml(sale) {
 }
 
 function saleDetailsHtml(sale) {
+  // Comp ticket: simpler details (no payment, no line items)
+  if (sale._isComp) {
+    return `
+      <div class="scan-details">
+        <div class="scan-detail-row">
+          <span class="lbl">${escapeHtml(t('compTypeLabel'))}</span>
+          <span class="val" style="background: var(--warn-soft); color: var(--warn); padding: 2px 8px; border-radius: 4px; font-size: 11px;">COMPLIMENTARY</span>
+        </div>
+        <div class="scan-detail-row">
+          <span class="lbl">${escapeHtml(t('scanDetailSaleId'))}</span>
+          <span class="val" style="font-family: ui-monospace, Menlo, monospace; font-size:12px;">${escapeHtml(sale.saleId)}</span>
+        </div>
+        ${sale.notes ? `<div class="scan-detail-row"><span class="lbl">${escapeHtml(t('thNotes'))}</span><span class="val">${escapeHtml(sale.notes)}</span></div>` : ''}
+      </div>
+    `;
+  }
+  // Regular sale: full details
   const totalTickets = (sale.lines || []).reduce((s,l) => s + l.qty, 0);
   const hasBalance = sale.balance > 0.001;
   return `
@@ -3342,7 +3663,7 @@ function saleDetailsHtml(sale) {
   `;
 }
 
-async function handleScannedTicket(saleId) {
+async function handleScannedTicket(ticketId) {
   if (scanResultLocked) return;
   scanResultLocked = true;
   const resEl = $('scan-result');
@@ -3353,10 +3674,13 @@ async function handleScannedTicket(saleId) {
   // Scroll the result into view so the seller doesn't have to thumb-scroll
   setTimeout(() => resEl.scrollIntoView({ behavior: 'smooth', block: 'start' }), 30);
 
+  // Decide which collection to query: comps start with 'C', sales start with 'S'
+  const isComp = ticketId.startsWith('C');
+  const collName = isComp ? 'comps' : 'sales';
   let sale = null;
   try {
-    const snap = await getDoc(doc(db, 'sales', saleId));
-    if (snap.exists()) sale = { ...snap.data(), _docId: snap.id };
+    const snap = await getDoc(doc(db, collName, ticketId));
+    if (snap.exists()) sale = { ...snap.data(), _docId: snap.id, _kind: isComp ? 'comp' : 'sale' };
   } catch (e) {
     console.warn('Lookup failed', e);
   }
@@ -3365,14 +3689,35 @@ async function handleScannedTicket(saleId) {
     resEl.className = 'scan-result invalid show';
     resEl.innerHTML = `
       <div class="big">⚠ ${escapeHtml(t('scanInvalid'))}</div>
-      <div class="sub">${escapeHtml(t('scanInvalidId'))}: <code>${escapeHtml(saleId)}</code></div>
+      <div class="sub">${escapeHtml(t('scanInvalidId'))}: <code>${escapeHtml(ticketId)}</code></div>
       <button type="button" id="scan-dismiss">${escapeHtml(t('scanTryAgain'))}</button>
     `;
     $('scan-dismiss').onclick = clearScanResult;
     return;
   }
 
-  const totalTickets = (sale.lines || []).reduce((s,l) => s + l.qty, 0);
+  // Normalize comp shape to look enough like a sale so the existing UI works.
+  if (sale._kind === 'comp') {
+    sale = {
+      ...sale,
+      saleId: sale.compId,
+      buyer: sale.name,
+      buyerEmail: sale.email,
+      payment: 'Complimentary',
+      paymentOther: '',
+      total: 0,
+      received: 0,
+      balance: 0,
+      notes: sale.notes || '',
+      seller: t('adminLabel'),
+      date: sale.createdAt && sale.createdAt.toDate ? sale.createdAt.toDate().toISOString().slice(0,10) : todayISO(),
+      lines: [], // no line items for comps
+      _isComp: true,
+      _compGuests: sale.guests || 1,
+    };
+  }
+
+  const totalTickets = sale._isComp ? (sale._compGuests || 1) : (sale.lines || []).reduce((s,l) => s + l.qty, 0);
 
   if (sale.scannedAt) {
     // Already checked in — show LOUD red warning + full details so staff can decide
@@ -3411,11 +3756,12 @@ async function handleScannedTicket(saleId) {
     const btn = $('scan-checkin');
     btn.disabled = true;
     try {
-      await setDoc(doc(db, 'sales', saleId), {
+      const collName = sale._isComp ? 'comps' : 'sales';
+      await setDoc(doc(db, collName, ticketId), {
         scannedAt: serverTimestamp(),
         scannedBy: currentUser ? currentUser.name || t('adminLabel') : '',
       }, { merge: true });
-      addRecentScan({ saleId, buyer: sale.buyer, time: new Date(), status: 'checked-in' });
+      addRecentScan({ saleId: ticketId, buyer: sale.buyer, time: new Date(), status: 'checked-in' });
       showToast(t('scanCheckedInToast'));
       clearScanResult();
     } catch (e) {
