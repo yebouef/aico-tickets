@@ -3337,8 +3337,17 @@ async function addComp() {
     $('new-comp-guests').value = '1';
     $('new-comp-notes').value = '';
     showToast(t('toastCompAdded'));
-    // Auto-send email if provided
-    if (email) sendCompEmail({ ...compData, createdAt: new Date() });
+    // Auto-send: to the guest (if email provided) AND to the archive (always)
+    sendAllCompEmails({ ...compData, createdAt: new Date() }).then(results => {
+      const parts = [];
+      if (results.recipient) {
+        parts.push(results.recipient.sent ? `✓ sent to ${email}` : `⚠ failed to ${email}`);
+      }
+      if (results.archive) {
+        parts.push(results.archive.sent ? `✓ archive copy sent` : `⚠ archive failed`);
+      }
+      if (parts.length) showToast(parts.join(' · '));
+    });
   } catch (e) {
     showToast(t('toastError') + e.message, true);
   }
@@ -3364,14 +3373,12 @@ async function resendCompEmail(compId) {
   else showToast(t('toastEmailFailed'), true);
 }
 
-async function sendCompEmail(comp) {
-  if (!emailjsConfigured() || !comp.email) return { sent: false };
-  tryInitEmailjs();
+function buildCompEmailParams(comp, recipient) {
   const ticketUrl = ticketUrlFor(comp.compId);
-  const params = {
-    to_email: comp.email,
+  return {
+    to_email: recipient,
     buyer_name: comp.name || '',
-    buyer_email: comp.email,
+    buyer_email: comp.email || '',
     sale_id: comp.compId,
     event_name: appConfig.eventName || 'AICO Event',
     event_date: appConfig.eventDate || '',
@@ -3387,13 +3394,41 @@ async function sendCompEmail(comp) {
     sale_date: formatDate(todayISO()),
     table_name: comp.tableName || '',
   };
+}
+
+async function sendOneCompEmail(recipient, comp) {
+  if (!emailjsConfigured() || !recipient) return { sent: false };
+  tryInitEmailjs();
   try {
-    await emailjs.send(appConfig.emailjsServiceId, appConfig.emailjsTemplateId, params);
+    await emailjs.send(
+      appConfig.emailjsServiceId,
+      appConfig.emailjsTemplateId,
+      buildCompEmailParams(comp, recipient)
+    );
     return { sent: true };
   } catch (e) {
-    console.warn('Comp email failed', e);
+    console.warn('Comp email failed for', recipient, e);
     return { sent: false, error: e };
   }
+}
+
+// Sends comp ticket email to the guest (if they have email) AND archive
+async function sendAllCompEmails(comp) {
+  const results = { recipient: null, archive: null };
+  const tasks = [];
+  if (comp.email) {
+    tasks.push(sendOneCompEmail(comp.email, comp).then(r => results.recipient = r));
+  }
+  if (appConfig.archiveEmail) {
+    tasks.push(sendOneCompEmail(appConfig.archiveEmail, comp).then(r => results.archive = r));
+  }
+  await Promise.all(tasks);
+  return results;
+}
+
+// Backward-compat name: single-recipient send (used by Resend button)
+async function sendCompEmail(comp) {
+  return sendOneCompEmail(comp.email, comp);
 }
 
 // =============== TABLES ===============
