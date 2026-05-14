@@ -1100,10 +1100,7 @@
   <section class="view" id="view-dashboard">
 
     <div class="card">
-      <div style="display:flex; align-items:center; gap:10px; margin-bottom: 14px;">
-        <h2 data-i18n="dashboard" style="margin:0;">Dashboard</h2>
-        <button type="button" class="lock-btn" id="lock-btn" data-i18n="lockDashboard">Lock dashboard</button>
-      </div>
+      <h2 data-i18n="dashboard">Dashboard</h2>
       <div class="kpi-grid">
         <div class="kpi">
           <div class="label" data-i18n="ticketsRemaining">Tickets Remaining</div>
@@ -1267,16 +1264,9 @@
 <div class="modal-backdrop" id="post-sale-modal">
   <div class="post-sale-modal">
     <h3 data-i18n="postSaleTitle">Sale recorded ✓</h3>
-    <p id="post-sale-summary" data-i18n="postSaleSubtitle">Here's the virtual ticket for the buyer.</p>
-    <div class="ps-mini-qr">
-      <img id="post-sale-qr" alt="QR code" />
-      <div style="margin-top:8px; font-weight:600;" id="post-sale-id"></div>
-      <div class="ps-link"><a id="post-sale-link" href="#" target="_blank" rel="noopener"></a></div>
-    </div>
-    <div id="post-sale-email-status" style="font-size: 12px; margin-bottom: 10px; color: var(--ink-soft);"></div>
+    <p data-i18n="postSaleSubtitleSecure">The ticket is being delivered automatically to the buyer.</p>
+    <div id="post-sale-email-status" style="margin: 14px 0;"></div>
     <div class="modal-actions">
-      <button type="button" class="btn-secondary" id="post-sale-copy" data-i18n="copyLink">Copy link</button>
-      <button type="button" class="btn-secondary" id="post-sale-open" data-i18n="openTicket">Open ticket</button>
       <button type="button" class="btn-primary" id="post-sale-done" data-i18n="done">Done</button>
     </div>
   </div>
@@ -1478,6 +1468,14 @@ const I18N = {
     confirmSaveConfig: 'Save these settings? They affect everyone using the app.',
     postSaleTitle: 'Sale recorded ✓',
     postSaleSubtitle: 'Here is the virtual ticket for the buyer.',
+    postSaleSubtitleSecure: 'The ticket is being delivered automatically to the buyer.',
+    sendingEmails: 'Sending emails…',
+    emailSentBuyer: '✓ Confirmation sent to buyer',
+    emailFailedBuyer: '⚠ Could not send confirmation to buyer',
+    emailNoBuyer: '— No buyer email provided, no confirmation sent',
+    emailSentArchive: '✓ Archive copy sent to AICO',
+    emailFailedArchive: '⚠ Could not send archive copy',
+    emailNotConfigured: '⚠ Email is not configured — no confirmation sent',
     copyLink: 'Copy link',
     openTicket: 'Open ticket',
     done: 'Done',
@@ -1653,6 +1651,14 @@ const I18N = {
     confirmSaveConfig: 'Enregistrer ces paramètres ? Ils affectent toutes les personnes utilisant l’application.',
     postSaleTitle: 'Vente enregistrée ✓',
     postSaleSubtitle: 'Voici le billet virtuel pour l’acheteur.',
+    postSaleSubtitleSecure: 'Le billet est envoyé automatiquement à l’acheteur.',
+    sendingEmails: 'Envoi des courriels…',
+    emailSentBuyer: '✓ Confirmation envoyée à l’acheteur',
+    emailFailedBuyer: '⚠ Impossible d’envoyer la confirmation à l’acheteur',
+    emailNoBuyer: '— Aucun courriel acheteur fourni, aucune confirmation envoyée',
+    emailSentArchive: '✓ Copie d’archive envoyée à AICO',
+    emailFailedArchive: '⚠ Impossible d’envoyer la copie d’archive',
+    emailNotConfigured: '⚠ Le courriel n’est pas configuré — aucune confirmation envoyée',
     copyLink: 'Copier le lien',
     openTicket: 'Ouvrir le billet',
     done: 'Terminé',
@@ -2338,14 +2344,6 @@ $('pw-input').addEventListener('keydown', (e) => {
 $('pw-modal').addEventListener('click', (e) => {
   if (e.target.id === 'pw-modal') hidePwModal();
 });
-$('lock-btn').addEventListener('click', () => {
-  if (currentUser && currentUser.role === 'admin') {
-    logout();
-  } else {
-    dashUnlocked = false;
-    setView('sales');
-  }
-});
 
 setInterval(() => { $('locked-date').textContent = formatDate(todayISO()); }, 60000);
 
@@ -2611,57 +2609,41 @@ async function sendAllEmails(sale) {
   return results;
 }
 
-// --- Post-sale modal (QR + share link) ---
+// --- Post-sale modal (sale recorded + delivery status only — no shareable QR/link) ---
 async function showPostSaleModal(sale) {
-  const url = ticketUrlFor(sale.saleId);
-  const qrDataUrl = await makeQrDataUrl(url);
-  $('post-sale-qr').src = qrDataUrl;
-  $('post-sale-id').textContent = sale.saleId;
-  const link = $('post-sale-link');
-  link.href = url;
-  link.textContent = url;
-  $('post-sale-summary').textContent = t('postSaleSubtitle');
-
-  // Show modal first, then attempt emails in background
   const status = $('post-sale-email-status');
   status.innerHTML = '';
   $('post-sale-modal').classList.add('show');
+  $('post-sale-done').onclick = () => $('post-sale-modal').classList.remove('show');
 
-  if (emailjsConfigured() && (sale.buyerEmail || appConfig.archiveEmail)) {
-    status.innerHTML = '<div style="color:var(--ink-soft);">…</div>';
-    const results = await sendAllEmails(sale);
-    const lines = [];
-    if (results.buyer) {
-      if (results.buyer.sent) {
-        lines.push(`<div style="color:var(--good);">✉️ ${t('toastEmailSent')} → ${escapeHtml(sale.buyerEmail)}</div>`);
-      } else {
-        lines.push(`<div style="color:var(--bad);">⚠ ${t('toastEmailFailed')} → ${escapeHtml(sale.buyerEmail)}</div>`);
-      }
-    }
-    if (results.archive) {
-      if (results.archive.sent) {
-        lines.push(`<div style="color:var(--good);">📋 Archive copy sent → ${escapeHtml(appConfig.archiveEmail)}</div>`);
-      } else {
-        lines.push(`<div style="color:var(--bad);">⚠ Archive copy failed</div>`);
-      }
-    }
-    status.innerHTML = lines.join('');
+  if (!emailjsConfigured()) {
+    status.innerHTML = `<div style="color:var(--warn); font-weight:600;">${escapeHtml(t('emailNotConfigured'))}</div>`;
+    return;
   }
 
-  $('post-sale-open').onclick = () => window.open(url, '_blank', 'noopener');
-  $('post-sale-copy').onclick = async () => {
-    try {
-      await navigator.clipboard.writeText(url);
-      showToast(t('toastLinkCopied'));
-    } catch (e) {
-      // Fallback: select & copy via temp input
-      const ta = document.createElement('textarea');
-      ta.value = url; document.body.appendChild(ta);
-      ta.select(); document.execCommand('copy'); ta.remove();
-      showToast(t('toastLinkCopied'));
+  status.innerHTML = `<div style="color:var(--ink-soft);">${escapeHtml(t('sendingEmails'))}</div>`;
+  const results = await sendAllEmails(sale);
+  const lines = [];
+
+  if (sale.buyerEmail) {
+    if (results.buyer && results.buyer.sent) {
+      lines.push(`<div style="color:var(--good); font-weight:600;">${escapeHtml(t('emailSentBuyer'))}</div>`);
+    } else if (results.buyer) {
+      lines.push(`<div style="color:var(--bad); font-weight:600;">${escapeHtml(t('emailFailedBuyer'))}</div>`);
     }
-  };
-  $('post-sale-done').onclick = () => $('post-sale-modal').classList.remove('show');
+  } else {
+    lines.push(`<div style="color:var(--ink-soft);">${escapeHtml(t('emailNoBuyer'))}</div>`);
+  }
+
+  if (appConfig.archiveEmail) {
+    if (results.archive && results.archive.sent) {
+      lines.push(`<div style="color:var(--good); font-weight:600;">${escapeHtml(t('emailSentArchive'))}</div>`);
+    } else if (results.archive) {
+      lines.push(`<div style="color:var(--bad); font-weight:600;">${escapeHtml(t('emailFailedArchive'))}</div>`);
+    }
+  }
+
+  status.innerHTML = lines.join('');
 }
 
 // --- Public ticket view (when ?ticket=SALEID is in URL) ---
