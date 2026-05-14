@@ -901,8 +901,9 @@
       <button id="logout-btn" data-i18n="signOut">Sign out</button>
     </div>
     <div class="tabs" id="tabs" role="tablist" style="display:none;">
-      <button class="tab active" data-view="sales" data-i18n="tabSales">Sales Entry</button>
-      <button class="tab" data-view="dashboard" data-i18n="tabDashboard">Dashboard</button>
+      <button class="tab active" id="tab-sales" data-view="sales" data-i18n="tabSales">Sales Entry</button>
+      <button class="tab" id="tab-dashboard" data-view="dashboard" data-i18n="tabDashboard">Dashboard</button>
+      <button class="tab" id="tab-scanner" title="Opens the scanner in a new tab" data-i18n="tabScannerNav">📷 Scanner</button>
     </div>
     <div class="lang-switch" role="tablist">
       <button class="lang-btn active" data-lang="en">EN</button>
@@ -1437,6 +1438,7 @@ const I18N = {
     done: 'Done',
     ticketNotFound: 'Ticket not found.',
     tabScanner: 'Scanner',
+    tabScannerNav: '📷 Scanner',
     scannerTitle: 'Ticket Scanner',
     scannerSubtitle: 'Point the camera at a ticket QR code to check it in.',
     scannerStartHint: 'Tap "Start camera" to begin scanning.',
@@ -1606,6 +1608,7 @@ const I18N = {
     done: 'Terminé',
     ticketNotFound: 'Billet introuvable.',
     tabScanner: 'Scanner',
+    tabScannerNav: '📷 Scanner',
     scannerTitle: 'Scanner de billets',
     scannerSubtitle: 'Pointez la caméra vers un QR code pour valider le billet.',
     scannerStartHint: 'Appuyez sur « Démarrer la caméra » pour commencer.',
@@ -1798,16 +1801,33 @@ function refreshAuthUI() {
     const displayName = currentUser.role === 'admin' ? t('adminLabel') : currentUser.name;
     $('user-name').textContent = displayName;
     $('user-pill').style.display = 'inline-flex';
+    // Always show the tabs row when logged in (so Scanner is always reachable),
+    // but hide Sales Entry for admin.
+    $('tabs').style.display = 'inline-flex';
     if (currentUser.role === 'seller') {
-      $('tabs').style.display = 'inline-flex';
+      $('tab-sales').style.display = '';
       $('locked-seller').textContent = currentUser.name;
     } else {
-      $('tabs').style.display = 'none';
+      $('tab-sales').style.display = 'none';
     }
   } else {
     $('user-pill').style.display = 'none';
     $('tabs').style.display = 'none';
   }
+}
+
+// Build the scanner URL using publicUrl if available, else current location.
+function scannerPageUrl() {
+  let base = (appConfig.publicUrl || '').trim();
+  if (!base || /^file:/i.test(base)) {
+    if (/^file:/i.test(location.href)) base = '';
+    else base = location.origin + location.pathname;
+  }
+  if (!base) return '?mode=scan';
+  base = base.replace(/[?#].*$/, '');
+  return /\.html?$/i.test(base) || base.endsWith('/')
+    ? `${base}?mode=scan`
+    : `${base}/?mode=scan`;
 }
 
 // --- View routing ---
@@ -2211,7 +2231,13 @@ $('export-csv').addEventListener('click', () => {
 });
 
 document.querySelectorAll('.tab').forEach(b => {
-  b.addEventListener('click', () => setView(b.dataset.view));
+  b.addEventListener('click', () => {
+    if (b.id === 'tab-scanner') {
+      window.open(scannerPageUrl(), '_blank', 'noopener');
+      return;
+    }
+    if (b.dataset.view) setView(b.dataset.view);
+  });
 });
 document.querySelectorAll('.lang-btn').forEach(b => {
   b.addEventListener('click', () => {
