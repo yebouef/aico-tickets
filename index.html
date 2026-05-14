@@ -582,29 +582,89 @@
     justify-content: center;
     margin-bottom: 14px;
   }
+  /* Scan result: takes the place of the camera view for clarity on mobile */
   .scan-result {
-    border-radius: 14px;
-    padding: 22px 20px;
-    margin-bottom: 14px;
-    text-align: center;
     display: none;
+    border-radius: 14px;
+    padding: 28px 20px;
+    text-align: center;
+    flex-direction: column;
+    min-height: 480px;
   }
-  .scan-result.show { display: block; }
+  .scan-result.show { display: flex; }
+  /* When a result is shown, hide the camera so the result is the only thing on screen */
+  .scanner-wrap.result-showing .scanner-video-wrap,
+  .scanner-wrap.result-showing .scanner-controls,
+  .scanner-wrap.result-showing .manual-entry { display: none; }
   .scan-result .big {
-    font-size: 28px;
+    font-size: 30px;
     font-weight: 800;
-    margin: 4px 0 6px 0;
+    margin: 6px 0 8px 0;
     letter-spacing: .5px;
   }
   .scan-result .who {
-    font-size: 17px;
-    font-weight: 700;
-    margin-bottom: 4px;
+    font-size: 22px;
+    font-weight: 800;
+    margin: 6px 0 2px 0;
+    color: var(--ink);
+  }
+  .scan-result .guests {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--ink-soft);
   }
   .scan-result .sub {
     font-size: 14px;
     opacity: .85;
     margin-bottom: 14px;
+  }
+  .scan-details {
+    background: rgba(255,255,255,.55);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin: 6px 0 14px 0;
+    text-align: left;
+  }
+  .scan-detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    font-size: 13px;
+    color: var(--ink);
+    border-bottom: 1px dashed rgba(15,23,42,.08);
+  }
+  .scan-detail-row:last-child { border-bottom: none; }
+  .scan-detail-row .lbl { color: var(--ink-soft); font-weight: 600; }
+  .scan-detail-row .val { font-weight: 700; }
+  .scan-ticket-line {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+    font-size: 13px;
+    color: var(--ink);
+  }
+  .scan-ticket-line .name { flex: 1; }
+  .scan-ticket-line .qty { margin: 0 8px; color: var(--ink-soft); font-weight: 600; }
+  .scan-ticket-line .amt { font-variant-numeric: tabular-nums; font-weight: 700; }
+  .scan-total-line {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(15,23,42,.12);
+    display: flex;
+    justify-content: space-between;
+    font-weight: 800;
+    font-size: 15px;
+  }
+  .balance-warning {
+    background: var(--bad-soft);
+    color: var(--bad);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    margin: 10px 0;
+    text-align: center;
+    font-size: 14px;
   }
   .scan-result.valid {
     background: var(--good-soft);
@@ -1504,6 +1564,18 @@ const I18N = {
     scanCameraError: 'Could not start camera. Check browser permissions.',
     scannerSignInTitle: 'Sign in to scan',
     scannerNumTickets: '{n} ticket(s)',
+    scanGuests: '{n} guest(s)',
+    scanCheckInBtn: 'CHECK IN {n} GUEST(S)',
+    scanDetailSaleId: 'Sale ID',
+    scanDetailDate: 'Sale date',
+    scanDetailSeller: 'Sold by',
+    scanDetailPayment: 'Payment',
+    scanDetailTotal: 'Total',
+    scanDetailPaid: 'Paid',
+    scanDetailBalance: 'Balance due',
+    scanBalanceWarning: '⚠ Balance due: {amount} — collect at the door',
+    scanTicketsHeader: 'Tickets',
+    scanInvalidId: 'Code scanned',
     tBrand: 'AICO Ticket',
     tBuyer: 'Buyer',
     tDate: 'Issued',
@@ -1687,6 +1759,18 @@ const I18N = {
     scanCameraError: 'Impossible de démarrer la caméra. Vérifiez les permissions du navigateur.',
     scannerSignInTitle: 'Connexion pour scanner',
     scannerNumTickets: '{n} billet(s)',
+    scanGuests: '{n} invité(s)',
+    scanCheckInBtn: 'VALIDER {n} INVITÉ(S)',
+    scanDetailSaleId: 'ID de vente',
+    scanDetailDate: 'Date de vente',
+    scanDetailSeller: 'Vendu par',
+    scanDetailPayment: 'Paiement',
+    scanDetailTotal: 'Total',
+    scanDetailPaid: 'Payé',
+    scanDetailBalance: 'Solde dû',
+    scanBalanceWarning: '⚠ Solde dû : {amount} — à percevoir à l’entrée',
+    scanTicketsHeader: 'Billets',
+    scanInvalidId: 'Code scanné',
     tBrand: 'Billet AICO',
     tBuyer: 'Acheteur',
     tDate: 'Émis le',
@@ -2778,12 +2862,66 @@ function addRecentScan(scan) {
   renderRecentScans();
 }
 
+function ticketLinesHtml(sale) {
+  return (sale.lines || []).map(l => {
+    const c = CATEGORIES[l.cat];
+    const name = c ? t(c.i18nKey) : l.cat;
+    return `<div class="scan-ticket-line">
+      <span class="name">${escapeHtml(name)}</span>
+      <span class="qty">×${l.qty}</span>
+      <span class="amt">${fmt(l.subtotal)}</span>
+    </div>`;
+  }).join('');
+}
+
+function saleDetailsHtml(sale) {
+  const totalTickets = (sale.lines || []).reduce((s,l) => s + l.qty, 0);
+  const hasBalance = sale.balance > 0.001;
+  return `
+    <div class="scan-details">
+      <div style="font-size:12px; text-transform:uppercase; letter-spacing:.5px; color:var(--ink-soft); font-weight:700; margin-bottom:6px;">${escapeHtml(t('scanTicketsHeader'))} (${totalTickets})</div>
+      ${ticketLinesHtml(sale)}
+      <div class="scan-total-line">
+        <span>${escapeHtml(t('scanDetailTotal'))}</span>
+        <span>${fmt(sale.total)}</span>
+      </div>
+    </div>
+    ${hasBalance ? `<div class="balance-warning">${escapeHtml(t('scanBalanceWarning').replace('{amount}', fmt(sale.balance)))}</div>` : ''}
+    <div class="scan-details">
+      <div class="scan-detail-row">
+        <span class="lbl">${escapeHtml(t('scanDetailSaleId'))}</span>
+        <span class="val" style="font-family: ui-monospace, Menlo, monospace; font-size:12px;">${escapeHtml(sale.saleId)}</span>
+      </div>
+      <div class="scan-detail-row">
+        <span class="lbl">${escapeHtml(t('scanDetailDate'))}</span>
+        <span class="val">${escapeHtml(formatDate(sale.date))}</span>
+      </div>
+      <div class="scan-detail-row">
+        <span class="lbl">${escapeHtml(t('scanDetailSeller'))}</span>
+        <span class="val">${escapeHtml(sale.seller || '—')}</span>
+      </div>
+      <div class="scan-detail-row">
+        <span class="lbl">${escapeHtml(t('scanDetailPayment'))}</span>
+        <span class="val">${escapeHtml(localizePayment(sale.payment, sale.paymentOther))}</span>
+      </div>
+      <div class="scan-detail-row">
+        <span class="lbl">${escapeHtml(t('scanDetailPaid'))}</span>
+        <span class="val">${fmt(sale.received)} / ${fmt(sale.total)}</span>
+      </div>
+    </div>
+  `;
+}
+
 async function handleScannedTicket(saleId) {
   if (scanResultLocked) return;
   scanResultLocked = true;
   const resEl = $('scan-result');
+  const wrap = document.querySelector('.scanner-wrap');
+  wrap.classList.add('result-showing');
   resEl.className = 'scan-result show';
-  resEl.innerHTML = `<div style="color:var(--ink-soft);">…</div>`;
+  resEl.innerHTML = `<div style="padding:40px; color:var(--ink-soft);">…</div>`;
+  // Scroll the result into view so the seller doesn't have to thumb-scroll
+  setTimeout(() => resEl.scrollIntoView({ behavior: 'smooth', block: 'start' }), 30);
 
   let sale = null;
   try {
@@ -2797,21 +2935,25 @@ async function handleScannedTicket(saleId) {
     resEl.className = 'scan-result invalid show';
     resEl.innerHTML = `
       <div class="big">⚠ ${escapeHtml(t('scanInvalid'))}</div>
-      <div class="sub">${escapeHtml(saleId)}</div>
+      <div class="sub">${escapeHtml(t('scanInvalidId'))}: <code>${escapeHtml(saleId)}</code></div>
       <button type="button" id="scan-dismiss">${escapeHtml(t('scanTryAgain'))}</button>
     `;
     $('scan-dismiss').onclick = clearScanResult;
     return;
   }
 
+  const totalTickets = (sale.lines || []).reduce((s,l) => s + l.qty, 0);
+
   if (sale.scannedAt) {
-    // Already checked in — show LOUD red warning
+    // Already checked in — show LOUD red warning + full details so staff can decide
     const scannedDate = sale.scannedAt.toDate ? sale.scannedAt.toDate() : new Date(sale.scannedAt);
     resEl.className = 'scan-result used show';
     resEl.innerHTML = `
       <div class="big">⛔ ${escapeHtml(t('scanUsed'))}</div>
       <div class="who">${escapeHtml(sale.buyer || '—')}</div>
+      <div class="guests">${escapeHtml(t('scanGuests').replace('{n}', totalTickets))}</div>
       <div class="sub">${escapeHtml(t('scanCheckedInAt'))} ${escapeHtml(scannedDate.toLocaleString(I18N[lang].locale))}${sale.scannedBy ? ' ' + escapeHtml(t('scanBy')) + ' ' + escapeHtml(sale.scannedBy) : ''}</div>
+      ${saleDetailsHtml(sale)}
       <button type="button" id="scan-dismiss">${escapeHtml(t('scanContinue'))}</button>
     `;
     $('scan-dismiss').onclick = clearScanResult;
@@ -2819,13 +2961,13 @@ async function handleScannedTicket(saleId) {
   }
 
   // Valid — show green and offer Check In button
-  const totalTickets = (sale.lines || []).reduce((s,l) => s + l.qty, 0);
   resEl.className = 'scan-result valid show';
   resEl.innerHTML = `
     <div class="big">✓ ${escapeHtml(t('scanValid'))}</div>
     <div class="who">${escapeHtml(sale.buyer || '—')}</div>
-    <div class="sub">${escapeHtml(t('scannerNumTickets').replace('{n}', totalTickets))} · ${escapeHtml(sale.saleId)}</div>
-    <button type="button" class="check-in-btn" id="scan-checkin">${escapeHtml(t('scanCheckInNow'))}</button>
+    <div class="guests">${escapeHtml(t('scanGuests').replace('{n}', totalTickets))}</div>
+    ${saleDetailsHtml(sale)}
+    <button type="button" class="check-in-btn" id="scan-checkin">${escapeHtml(t('scanCheckInBtn').replace('{n}', totalTickets))}</button>
   `;
   $('scan-checkin').onclick = async () => {
     const btn = $('scan-checkin');
@@ -2850,6 +2992,7 @@ function clearScanResult() {
   const resEl = $('scan-result');
   resEl.className = 'scan-result';
   resEl.innerHTML = '';
+  document.querySelector('.scanner-wrap').classList.remove('result-showing');
 }
 
 async function startScanner() {
