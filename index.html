@@ -198,19 +198,19 @@ function mapPaymentFromDB(r){ return { id:r.id, memberId:r.member_id, date:r.dat
 function mapPaymentToDB(p){ return { id:p.id, member_id:p.memberId, date:p.date, amount:p.amount, type:p.type, event_id:p.eventId||null, applies_to:(p.appliesTo&&p.appliesTo.length)?p.appliesTo:null, notes:p.notes||null }; }
 function mapEventFromDB(r){
   const ids = (r.beneficiary_member_ids && r.beneficiary_member_ids.length) ? r.beneficiary_member_ids : (r.beneficiary_member_id ? [r.beneficiary_member_id] : []);
-  return { id:r.id, name:r.name, date:r.date, type:r.type, minAmount:Number(r.min_amount||0), description:r.description||"", beneficiaryMemberId:ids[0]||null, beneficiaryMemberIds:ids, isCouple:!!r.is_couple, beneficiaryShare:Number(r.beneficiary_share||0), aicoShare:Number(r.aico_share||0), raffleEnabled:!!r.raffle_enabled, ticketPrice:Number(r.ticket_price||0), winnerNotes:r.winner_notes||"" };
+  return { id:r.id, name:r.name, date:r.date, type:r.type, minAmount:Number(r.min_amount||0), description:r.description||"", beneficiaryMemberId:ids[0]||null, beneficiaryMemberIds:ids, isCouple:!!r.is_couple, beneficiaryShare:Number(r.beneficiary_share||0), aicoShare:Number(r.aico_share||0) };
 }
 function mapEventToDB(e){
   const ids = (e.beneficiaryMemberIds && e.beneficiaryMemberIds.length) ? e.beneficiaryMemberIds : (e.beneficiaryMemberId ? [e.beneficiaryMemberId] : []);
-  return { id:e.id, name:e.name, date:e.date, type:e.type, min_amount:e.minAmount||0, description:e.description||null, beneficiary_member_id:ids[0]||null, beneficiary_member_ids:ids.length?ids:null, is_couple:!!e.isCouple, beneficiary_share:e.beneficiaryShare||0, aico_share:e.aicoShare||0, raffle_enabled:!!e.raffleEnabled, ticket_price:e.ticketPrice||null, winner_notes:e.winnerNotes||null };
+  return { id:e.id, name:e.name, date:e.date, type:e.type, min_amount:e.minAmount||0, description:e.description||null, beneficiary_member_id:ids[0]||null, beneficiary_member_ids:ids.length?ids:null, is_couple:!!e.isCouple, beneficiary_share:e.beneficiaryShare||0, aico_share:e.aicoShare||0 };
 }
 function mapExpenseFromDB(r){ return { id:r.id, date:r.date, amount:Number(r.amount), category:r.category||"", paidBy:r.paid_by||"", eventId:r.event_id, description:r.description||"", sourceRecurringId:r.source_recurring_id||null, sourcePeriod:r.source_period||null }; }
 function mapExpenseToDB(x){ return { id:x.id, date:x.date, amount:x.amount, category:x.category||null, paid_by:x.paidBy||null, event_id:x.eventId||null, description:x.description||null, source_recurring_id:x.sourceRecurringId||null, source_period:x.sourcePeriod||null }; }
 function mapContactFromDB(r){ return { id:r.id, firstName:r.first_name, lastName:r.last_name, email:r.email||"", phone:r.phone||"", address:r.address||"", city:r.city||"", state:r.state||"", zip:r.zip||"", notes:r.notes||"", status:r.status||"prospect", invitedAt:r.invited_at, joinedMemberId:r.joined_member_id, source:r.source||"" }; }
 function mapContactToDB(c){ return { id:c.id, first_name:c.firstName, last_name:c.lastName, email:c.email||null, phone:c.phone||null, address:c.address||null, city:c.city||null, state:c.state||null, zip:c.zip||null, notes:c.notes||null, status:c.status||"prospect", invited_at:c.invitedAt||null, joined_member_id:c.joinedMemberId||null, source:c.source||null }; }
 // Map payment with contact support
-function mapPaymentFromDBv2(r){ return { id:r.id, memberId:r.member_id||null, contactId:r.contact_id||null, date:r.date, amount:Number(r.amount), type:r.type, eventId:r.event_id, appliesTo:r.applies_to||undefined, notes:r.notes||"", ticketCount:r.ticket_count||null, anonymousLabel:r.anonymous_label||null }; }
-function mapPaymentToDBv2(p){ return { id:p.id, member_id:p.memberId||null, contact_id:p.contactId||null, date:p.date, amount:p.amount, type:p.type, event_id:p.eventId||null, applies_to:(p.appliesTo&&p.appliesTo.length)?p.appliesTo:null, notes:p.notes||null, ticket_count:p.ticketCount||null, anonymous_label:p.anonymousLabel||null }; }
+function mapPaymentFromDBv2(r){ return { id:r.id, memberId:r.member_id||null, contactId:r.contact_id||null, date:r.date, amount:Number(r.amount), type:r.type, eventId:r.event_id, appliesTo:r.applies_to||undefined, notes:r.notes||"" }; }
+function mapPaymentToDBv2(p){ return { id:p.id, member_id:p.memberId||null, contact_id:p.contactId||null, date:p.date, amount:p.amount, type:p.type, event_id:p.eventId||null, applies_to:(p.appliesTo&&p.appliesTo.length)?p.appliesTo:null, notes:p.notes||null }; }
 
 async function loadAllFromSupabase(){
   const sess = (await sb.auth.getSession()).data.session;
@@ -619,32 +619,6 @@ const I18N = {
     couple_hint_one:"Leave unchecked unless you're representing a couple but listing only one spouse.",
     couple_hint_multi:"Couple share only applies to one household. With 3+ beneficiaries, the standard share is divided equally.",
     couple_hint_none:"Add at least one beneficiary first.",
-    raffle:"Raffle",
-    raffle_section:"Raffle",
-    raffle_enabled:"This event includes a raffle (sell tickets for cash)",
-    raffle_help:"Track raffle ticket sales as part of this event. Tickets can be sold to members, non-member contacts, or anonymous cash buyers.",
-    ticket_price:"Ticket price ($)",
-    sell_tickets:"+ Sell Tickets",
-    sell_tickets_title:"Sell Raffle Tickets",
-    num_tickets:"Number of tickets",
-    ticket_total:"Total amount",
-    buyer:"Buyer",
-    buyer_type:"Buyer type",
-    buyer_member:"AICO member",
-    buyer_contact:"Non-member contact",
-    buyer_anonymous:"Anonymous (cash buyer)",
-    anonymous_label_field:"Buyer label (optional)",
-    anonymous_label_ph:"e.g., \"Cash buyer at door\"",
-    tickets_sold:"tickets sold",
-    raffle_revenue:"Raffle revenue",
-    winner_notes:"Winner / draw notes",
-    save_winner_notes:"Save winner",
-    winner_saved:"Winner saved",
-    ticket_sale_recorded:"Ticket sale recorded",
-    no_ticket_sales:"No raffle tickets sold yet.",
-    raffle_sales:"Ticket sales",
-    sale_count:"tickets",
-    anonymous:"Anonymous",
     beneficiary_share:"Beneficiary share", aico_share:"AICO share",
     split_summary:"Split per AICO Statut",
     statut_info_title:"AICO Statut — Annex: Special Contributions",
@@ -864,32 +838,6 @@ const I18N = {
     couple_hint_one:"Laissez décoché sauf si vous représentez un couple mais ne listez qu'un seul conjoint.",
     couple_hint_multi:"La part du couple ne s'applique qu'à un seul foyer. Avec 3+ bénéficiaires, la part standard est divisée équitablement.",
     couple_hint_none:"Ajoutez d'abord au moins un bénéficiaire.",
-    raffle:"Tombola",
-    raffle_section:"Tombola",
-    raffle_enabled:"Cet événement inclut une tombola (vente de tickets en espèces)",
-    raffle_help:"Suivez les ventes de tickets de tombola dans le cadre de cet événement. Les tickets peuvent être vendus aux membres, contacts non-membres ou acheteurs anonymes.",
-    ticket_price:"Prix du ticket ($)",
-    sell_tickets:"+ Vendre des tickets",
-    sell_tickets_title:"Vendre des Tickets de Tombola",
-    num_tickets:"Nombre de tickets",
-    ticket_total:"Montant total",
-    buyer:"Acheteur",
-    buyer_type:"Type d'acheteur",
-    buyer_member:"Membre AICO",
-    buyer_contact:"Contact non-membre",
-    buyer_anonymous:"Anonyme (acheteur en espèces)",
-    anonymous_label_field:"Étiquette acheteur (optionnel)",
-    anonymous_label_ph:"ex. : « Acheteur à l'entrée »",
-    tickets_sold:"tickets vendus",
-    raffle_revenue:"Revenus tombola",
-    winner_notes:"Gagnant / notes du tirage",
-    save_winner_notes:"Enregistrer gagnant",
-    winner_saved:"Gagnant enregistré",
-    ticket_sale_recorded:"Vente de ticket enregistrée",
-    no_ticket_sales:"Aucun ticket de tombola vendu.",
-    raffle_sales:"Ventes de tickets",
-    sale_count:"tickets",
-    anonymous:"Anonyme",
     beneficiary_share:"Part du bénéficiaire", aico_share:"Part d'AICO",
     split_summary:"Répartition selon le Statut AICO",
     statut_info_title:"Statut AICO — Annexe : Cotisations exceptionnelles",
@@ -3088,13 +3036,6 @@ function openAddEvent(){
         </div>
       </div>
       <div class="form-row"><div><label>${t("description")}</label><textarea id="ne_desc" rows="2"></textarea></div></div>
-      <div style="padding:14px;background:var(--soft);border-radius:8px;border:1px solid var(--border);margin-bottom:14px">
-        <div style="margin-bottom:8px"><label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;font-weight:600;color:var(--brand)"><input type="checkbox" id="ne_raffle" style="width:auto;margin:0"> 🎟️ ${t("raffle_enabled")}</label></div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">${t("raffle_help")}</div>
-        <div id="ne_raffle_fields" style="display:none">
-          <div class="form-row" style="margin-bottom:0"><div><label>${t("ticket_price")} *</label><input id="ne_tprice" type="number" min="0" step="0.01" value="5"></div></div>
-        </div>
-      </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" type="button" id="neCancel">${t("cancel")}</button>
         <button class="btn" type="submit">${t("create_event")}</button>
@@ -3108,9 +3049,6 @@ function openAddEvent(){
   const bShareInp = back.querySelector("#ne_bshare");
   const aShareInp = back.querySelector("#ne_ashare");
   const benefBlock = back.querySelector("#ne_benef_block");
-  const raffleChk = back.querySelector("#ne_raffle");
-  const raffleFields = back.querySelector("#ne_raffle_fields");
-  raffleChk.addEventListener("change", ()=>{ raffleFields.style.display = raffleChk.checked ? "" : "none"; });
   let benefIds = [];
 
   function syncSplit(){
@@ -3151,10 +3089,7 @@ function openAddEvent(){
       beneficiaryMemberId: ids[0] || null,
       isCouple: coupleChk.checked,
       beneficiaryShare: parseFloat(bShareInp.value)||0,
-      aicoShare: parseFloat(aShareInp.value)||0,
-      raffleEnabled: raffleChk.checked,
-      ticketPrice: raffleChk.checked ? (parseFloat(back.querySelector("#ne_tprice").value)||0) : null,
-      winnerNotes: ""
+      aicoShare: parseFloat(aShareInp.value)||0
     };
     (async()=>{ const {error}=await sb.from("events").insert(mapEventToDB(ev)); if(error){ toast(error.message,"err"); return; } toast(t("event_created"),"ok"); closeModal(back); await loadAllFromSupabase(); render(); setTimeout(()=>openEventView(ev.id),100); })();
   });
@@ -3162,13 +3097,8 @@ function openAddEvent(){
 
 function openEventView(eventId){
   const ev = DB.events.find(e=>e.id===eventId); if(!ev) return;
-  // Split payments: regular contributions vs raffle ticket sales
-  const allEventPayments = DB.payments.filter(p=>p.eventId===eventId);
-  const ticketSales = allEventPayments.filter(p=>p.ticketCount && p.ticketCount>0);
-  const contribs = allEventPayments.filter(p=>!p.ticketCount).sort((a,b)=>b.date.localeCompare(a.date));
+  const contribs = contributionsForEvent(eventId);
   const total = contribs.reduce((s,p)=>s+Number(p.amount||0),0);
-  const ticketCount = ticketSales.reduce((s,p)=>s+Number(p.ticketCount||0),0);
-  const ticketRevenue = ticketSales.reduce((s,p)=>s+Number(p.amount||0),0);
   const contributorIds = new Set(contribs.map(c=>c.memberId));
   const nonContribs = DB.members.filter(m=>!contributorIds.has(m.id));
   const rows = contribs.length===0
@@ -3224,24 +3154,18 @@ function openEventView(eventId){
       ${benefs.length?`<div style="margin-top:14px;padding-top:10px;border-top:1px dashed var(--border)"><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;font-weight:600;margin-bottom:4px">${t("beneficiary")}${benefs.length>1?'s':''}${ev.isCouple&&benefs.length===1?' <span class="pill pill-other" style="font-size:9px;margin-left:6px">Couple</span>':''}</div>${benefListRows}</div>`:''}
     </div>` : "";
 
-  // Raffle block (only if enabled)
-  const raffleBlock = ev.raffleEnabled ? renderRaffleBlock(ev, ticketSales, ticketCount, ticketRevenue) : "";
-
   const back = openModal(`
-    <h2>${escape(ev.name)}${ev.raffleEnabled?' <span style="font-size:18px">🎟️</span>':''}</h2>
+    <h2>${escape(ev.name)}</h2>
     <p style="color:var(--muted);font-size:13px;margin:-12px 0 14px">
       <span class="pill pill-${ev.type}">${eventTypeLabel(ev.type)}</span>
       &nbsp;·&nbsp; ${fmtDate(ev.date)}
       &nbsp;·&nbsp; ${t("minimum")} <b>${fmtMoney(ev.minAmount)}</b>
-      ${ev.raffleEnabled?` &nbsp;·&nbsp; ${t("ticket_price")} <b>${fmtMoney(ev.ticketPrice||0)}</b>`:''}
     </p>
     ${ev.description?`<div class="info-bar">${escape(ev.description)}</div>`:""}
     ${splitBlock}
-    ${raffleBlock}
     <div class="row-flex"><div style="font-size:13px;color:var(--muted)">${nonContribList}</div>
       <div class="actions">
         <button class="btn btn-sm" id="logContrib">${t("log_contribution")}</button>
-        ${ev.raffleEnabled?`<button class="btn btn-sm" id="sellTickets" style="background:#f0b400;color:#3b2c00">${t("sell_tickets")}</button>`:""}
         <button class="btn btn-sm btn-secondary" id="editEv">${t("edit_event")}</button>
       </div>
     </div>
@@ -3250,142 +3174,11 @@ function openEventView(eventId){
   back.querySelector("#evClose").addEventListener("click", ()=>closeModal(back));
   back.querySelector("#logContrib").addEventListener("click", ()=>{ closeModal(back); openAddPayment(null, ev.id); });
   back.querySelector("#editEv").addEventListener("click", ()=>{ closeModal(back); openEditEvent(ev.id); });
-  const sellBtn = back.querySelector("#sellTickets");
-  if(sellBtn) sellBtn.addEventListener("click", ()=>{ closeModal(back); openSellTickets(ev.id); });
-  const winnerForm = back.querySelector("#raffleWinnerForm");
-  if(winnerForm) winnerForm.addEventListener("submit", e=>{
-    e.preventDefault();
-    const text = back.querySelector("#raffle_winner_notes").value.trim();
-    (async()=>{ const {error}=await sb.from("events").update({ winner_notes: text || null }).eq("id",ev.id); if(error){ toast(error.message,"err"); return; } toast(t("winner_saved"),"ok"); await loadAllFromSupabase(); render(); setTimeout(()=>openEventView(eventId),100); })();
-  });
-  back.querySelectorAll("[data-tdel]").forEach(b=>{
-    b.addEventListener("click", ()=>{
-      if(!confirm("Delete this ticket sale?")) return;
-      (async()=>{ const {error}=await sb.from("payments").delete().eq("id",b.dataset.tdel); if(error){ toast(error.message,"err"); return; } toast(t("payment_deleted"),"ok"); closeModal(back); await loadAllFromSupabase(); render(); setTimeout(()=>openEventView(eventId),100); })();
-    });
-  });
   back.querySelectorAll("[data-pdel]").forEach(b=>{
     b.addEventListener("click", ()=>{
       if(!confirm(t("confirm_delete_contrib"))) return;
       (async()=>{ const {error}=await sb.from("payments").delete().eq("id",b.dataset.pdel); if(error){ toast(error.message,"err"); return; } toast(t("contrib_deleted"),"ok"); closeModal(back); await loadAllFromSupabase(); render(); setTimeout(()=>openEventView(eventId),100); })();
     });
-  });
-}
-
-function renderRaffleBlock(ev, ticketSales, ticketCount, ticketRevenue){
-  const salesRows = ticketSales.length===0
-    ? `<div class="empty" style="background:#fff;border-radius:6px;padding:20px">${t("no_ticket_sales")}</div>`
-    : `<table style="background:#fff;border-radius:6px;overflow:hidden">
-        <thead><tr><th>${t("buyer")}</th><th>${t("date")}</th><th class="num">${t("sale_count")}</th><th class="num">${t("amount")}</th><th></th></tr></thead>
-        <tbody>${ticketSales.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(p=>{
-          let nameHtml = "?";
-          if(p.memberId){ const m = DB.members.find(x=>x.id===p.memberId); nameHtml = `<b>${m?escape(m.firstName+' '+m.lastName):'?'}</b> <span class="pill pill-member" style="font-size:9px;margin-left:4px">${t("buyer_member")}</span>`; }
-          else if(p.contactId){ const c = (DB.contacts||[]).find(x=>x.id===p.contactId); nameHtml = `<b>${c?escape(c.firstName+' '+c.lastName):'?'}</b> <span class="pill pill-other" style="font-size:9px;margin-left:4px">${t("buyer_contact")}</span>`; }
-          else { nameHtml = `<b style="color:var(--muted);font-style:italic">${t("anonymous")}</b>${p.anonymousLabel?` <span style="font-size:11px;color:var(--muted)">— ${escape(p.anonymousLabel)}</span>`:''}`; }
-          return `<tr><td>${nameHtml}</td><td>${fmtDate(p.date)}</td><td class="num">${p.ticketCount}</td><td class="num">${fmtMoney(p.amount)}</td><td><button class="btn btn-sm btn-danger" data-tdel="${p.id}">${t("del")}</button></td></tr>`;
-        }).join("")}</tbody>
-        <tfoot><tr><td>TOTAL</td><td></td><td class="num">${ticketCount}</td><td class="num">${fmtMoney(ticketRevenue)}</td><td></td></tr></tfoot>
-      </table>`;
-  return `<div class="card" style="background:linear-gradient(135deg,#fef3c7,#fffbea);border-color:#fcd34d;margin-bottom:14px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px">
-      <h3 style="margin:0;color:#92400e">🎟️ ${t("raffle_section")}</h3>
-      <div style="display:flex;gap:20px;font-size:13px">
-        <div><span style="color:var(--muted)">${t("ticket_price")}:</span> <b>${fmtMoney(ev.ticketPrice||0)}</b></div>
-        <div><span style="color:var(--muted)">${t("tickets_sold")}:</span> <b>${ticketCount}</b></div>
-        <div><span style="color:var(--muted)">${t("raffle_revenue")}:</span> <b style="color:var(--ok)">${fmtMoney(ticketRevenue)}</b></div>
-      </div>
-    </div>
-    <div style="font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">${t("raffle_sales")}</div>
-    ${salesRows}
-    <form id="raffleWinnerForm" style="margin-top:14px;padding-top:14px;border-top:1px dashed #fcd34d">
-      <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#92400e;margin-bottom:4px">🏆 ${t("winner_notes")}</label>
-      <div style="display:flex;gap:8px"><input id="raffle_winner_notes" value="${escape(ev.winnerNotes||'')}" placeholder="Ticket #042 — John Smith (TV)" style="flex:1"><button class="btn btn-sm" type="submit">${t("save_winner_notes")}</button></div>
-    </form>
-  </div>`;
-}
-
-function openSellTickets(eventId){
-  const ev = DB.events.find(e=>e.id===eventId); if(!ev || !ev.raffleEnabled) return;
-  const price = Number(ev.ticketPrice||0);
-  const memberOpts = DB.members.slice().sort((a,b)=>a.lastName.localeCompare(b.lastName))
-    .map(m=>`<option value="${m.id}">${escape(m.lastName)}, ${escape(m.firstName)}</option>`).join("");
-  const contactOpts = (DB.contacts||[]).slice().sort((a,b)=>a.lastName.localeCompare(b.lastName))
-    .map(c=>`<option value="${c.id}">${escape(c.lastName)}, ${escape(c.firstName)}</option>`).join("");
-  const back = openModal(`
-    <h2>🎟️ ${t("sell_tickets_title")} — ${escape(ev.name)}</h2>
-    <p style="font-size:13px;color:var(--muted);margin:-10px 0 14px">${t("ticket_price")}: <b>${fmtMoney(price)}</b></p>
-    <form id="stForm">
-      <div class="form-row">
-        <div>
-          <label>${t("buyer_type")}</label>
-          <div style="display:flex;gap:14px;align-items:center;font-size:13px;flex-wrap:wrap">
-            <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:normal;color:var(--text);margin:0"><input type="radio" name="st_btype" value="member" checked style="width:auto;margin:0"> ${t("buyer_member")}</label>
-            <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:normal;color:var(--text);margin:0"><input type="radio" name="st_btype" value="contact" style="width:auto;margin:0"> ${t("buyer_contact")}</label>
-            <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:normal;color:var(--text);margin:0"><input type="radio" name="st_btype" value="anonymous" style="width:auto;margin:0"> ${t("buyer_anonymous")}</label>
-          </div>
-        </div>
-      </div>
-      <div class="form-row" id="st_member_row"><div><label>${t("buyer")}</label><select id="st_member">${memberOpts}</select></div></div>
-      <div class="form-row" id="st_contact_row" style="display:none"><div><label>${t("buyer")}</label><select id="st_contact"><option value="">${t("pick_existing")}…</option>${contactOpts}</select></div></div>
-      <div class="form-row" id="st_anon_row" style="display:none"><div><label>${t("anonymous_label_field")}</label><input id="st_anon_label" placeholder="${t("anonymous_label_ph")}"></div></div>
-      <div class="form-row cols-3">
-        <div><label>${t("date")} *</label><input id="st_date" type="date" required value="${todayISO()}"></div>
-        <div><label>${t("num_tickets")} *</label><input id="st_count" type="number" min="1" step="1" required value="1"></div>
-        <div><label>${t("ticket_total")}</label><input id="st_total" readonly style="background:#f3f4f6;font-weight:700;color:var(--brand)" value="${fmtMoney(price)}"></div>
-      </div>
-      <div class="form-row"><div><label>${t("notes")}</label><textarea id="st_notes" rows="2"></textarea></div></div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" type="button" id="stCancel">${t("cancel")}</button>
-        <button class="btn" type="submit">${t("sell_tickets").replace('+ ','')}</button>
-      </div>
-    </form>`);
-  back.querySelector("#stCancel").addEventListener("click", ()=>{ closeModal(back); openEventView(eventId); });
-
-  const radios = back.querySelectorAll('input[name="st_btype"]');
-  const mRow = back.querySelector("#st_member_row");
-  const cRow = back.querySelector("#st_contact_row");
-  const aRow = back.querySelector("#st_anon_row");
-  function syncType(){
-    const v = back.querySelector('input[name="st_btype"]:checked').value;
-    mRow.style.display = v==="member" ? "" : "none";
-    cRow.style.display = v==="contact" ? "" : "none";
-    aRow.style.display = v==="anonymous" ? "" : "none";
-  }
-  radios.forEach(r=>r.addEventListener("change", syncType));
-  const countInp = back.querySelector("#st_count");
-  const totalInp = back.querySelector("#st_total");
-  function syncTotal(){
-    const n = Math.max(1, parseInt(countInp.value,10)||1);
-    totalInp.value = fmtMoney(n * price);
-  }
-  countInp.addEventListener("input", syncTotal);
-
-  back.querySelector("#stForm").addEventListener("submit", e=>{
-    e.preventDefault();
-    const btype = back.querySelector('input[name="st_btype"]:checked').value;
-    const n = Math.max(1, parseInt(countInp.value,10)||1);
-    const amount = n * price;
-    const p = {
-      id: uid("t"),
-      memberId: null, contactId: null, anonymousLabel: null,
-      date: back.querySelector("#st_date").value,
-      amount, type: "gala", eventId: ev.id,
-      ticketCount: n,
-      notes: back.querySelector("#st_notes").value.trim()
-    };
-    if(btype==="member"){ p.memberId = back.querySelector("#st_member").value; }
-    else if(btype==="contact"){
-      p.contactId = back.querySelector("#st_contact").value;
-      if(!p.contactId){ toast("Pick a contact or switch to Anonymous.","err"); return; }
-    } else {
-      p.anonymousLabel = back.querySelector("#st_anon_label").value.trim() || "Anonymous";
-    }
-    (async()=>{
-      const {error}=await sb.from("payments").insert(mapPaymentToDBv2(p));
-      if(error){ toast(error.message,"err"); return; }
-      toast(t("ticket_sale_recorded"),"ok"); closeModal(back);
-      await loadAllFromSupabase(); render(); setTimeout(()=>openEventView(eventId),100);
-    })();
   });
 }
 
@@ -3413,13 +3206,6 @@ function openEditEvent(id){
         </div>
       </div>
       <div class="form-row"><div><label>${t("description")}</label><textarea id="ee_desc" rows="2">${escape(ev.description||'')}</textarea></div></div>
-      <div style="padding:14px;background:var(--soft);border-radius:8px;border:1px solid var(--border);margin-bottom:14px">
-        <div style="margin-bottom:8px"><label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:13px;font-weight:600;color:var(--brand)"><input type="checkbox" id="ee_raffle" ${ev.raffleEnabled?'checked':''} style="width:auto;margin:0"> 🎟️ ${t("raffle_enabled")}</label></div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:10px">${t("raffle_help")}</div>
-        <div id="ee_raffle_fields" style="display:${ev.raffleEnabled?'':'none'}">
-          <div class="form-row" style="margin-bottom:0"><div><label>${t("ticket_price")} *</label><input id="ee_tprice" type="number" min="0" step="0.01" value="${ev.ticketPrice||5}"></div></div>
-        </div>
-      </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" type="button" id="eeCancel">${t("cancel")}</button>
         <button class="btn" type="submit">${t("save_changes")}</button>
@@ -3432,9 +3218,6 @@ function openEditEvent(id){
   const coupleHint = back.querySelector("#ee_couple_hint");
   const bShareInp = back.querySelector("#ee_bshare");
   const aShareInp = back.querySelector("#ee_ashare");
-  const raffleChk = back.querySelector("#ee_raffle");
-  const raffleFields = back.querySelector("#ee_raffle_fields");
-  raffleChk.addEventListener("change", ()=>{ raffleFields.style.display = raffleChk.checked ? "" : "none"; });
   let benefIds = (ev.beneficiaryMemberIds||[]).slice();
   function syncSplit(){
     const typ = typeSel.value;
@@ -3471,8 +3254,6 @@ function openEditEvent(id){
     ev.isCouple = coupleChk.checked;
     ev.beneficiaryShare = parseFloat(bShareInp.value)||0;
     ev.aicoShare = parseFloat(aShareInp.value)||0;
-    ev.raffleEnabled = raffleChk.checked;
-    ev.ticketPrice = raffleChk.checked ? (parseFloat(back.querySelector("#ee_tprice").value)||0) : null;
     (async()=>{ const {error}=await sb.from("events").update(mapEventToDB(ev)).eq("id",ev.id); if(error){ toast(error.message,"err"); return; } toast(t("event_updated"),"ok"); closeModal(back); await loadAllFromSupabase(); render(); })();
   });
 }
