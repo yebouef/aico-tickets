@@ -2738,6 +2738,7 @@ const I18N = {
 const LANG_KEY = 'aico-lang-v1';
 const USER_KEY = 'aico-user-v1';
 const ADMIN_PASSWORD = 'AICO2026';
+const DEFAULT_PUBLIC_URL = 'https://yebouef.github.io/aico-tickets/';
 
 let sales = [];
 let sellers = [];
@@ -2916,18 +2917,28 @@ function refreshAuthUI() {
   }
 }
 
-// Build the scanner URL using publicUrl if available, else current location.
-function scannerPageUrl() {
+function publicAppBaseUrl() {
   let base = (appConfig.publicUrl || '').trim();
   if (!base || /^file:/i.test(base)) {
-    if (/^file:/i.test(location.href)) base = '';
-    else base = location.origin + location.pathname;
+    base = /^file:/i.test(location.href) ? DEFAULT_PUBLIC_URL : location.origin + location.pathname;
   }
-  if (!base) return '?mode=scan';
   base = base.replace(/[?#].*$/, '');
-  return /\.html?$/i.test(base) || base.endsWith('/')
-    ? `${base}?mode=scan`
-    : `${base}/?mode=scan`;
+
+  // GitHub Pages project sites must include the repository slug.
+  // A root yebouef.github.io URL opens GitHub's "There isn't a Pages site here" 404.
+  try {
+    const url = new URL(base);
+    if (url.hostname === 'yebouef.github.io' && (url.pathname === '' || url.pathname === '/')) {
+      return DEFAULT_PUBLIC_URL.replace(/[?#].*$/, '').replace(/\/?$/, '/');
+    }
+  } catch (e) {}
+
+  return /\.html?$/i.test(base) || base.endsWith('/') ? base : `${base}/`;
+}
+
+// Build the scanner URL using publicUrl if available, else current location.
+function scannerPageUrl() {
+  return `${publicAppBaseUrl()}?mode=scan`;
 }
 
 // --- View routing ---
@@ -3786,29 +3797,7 @@ function tryInitEmailjs() {
 
 // --- URL helpers ---
 function ticketUrlFor(saleId) {
-  let base = (appConfig.publicUrl || '').trim();
-  // If admin hasn't set a public URL, fall back to the current page URL —
-  // but skip file:// since that won't work for anyone but the local viewer.
-  if (!base || /^file:/i.test(base)) {
-    if (/^file:/i.test(location.href)) {
-      // Last-resort fallback so the link isn't broken; admin should set publicUrl.
-      base = '';
-    } else {
-      base = location.origin + location.pathname;
-    }
-  }
-  if (!base) {
-    // Truly no usable base — return a relative URL.
-    return `?ticket=${encodeURIComponent(saleId)}`;
-  }
-  // Strip any existing query/hash from base
-  base = base.replace(/[?#].*$/, '');
-  const sep = base.endsWith('/') || /\.html?$/i.test(base) ? '?' : '/?';
-  // If base already ends with .html or /, use ? directly; else add / first
-  const url = /\.html?$/i.test(base) || base.endsWith('/')
-    ? `${base}?ticket=${encodeURIComponent(saleId)}`
-    : `${base}/?ticket=${encodeURIComponent(saleId)}`;
-  return url;
+  return `${publicAppBaseUrl()}?ticket=${encodeURIComponent(saleId)}`;
 }
 
 function getTicketIdFromUrl() {
