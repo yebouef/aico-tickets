@@ -1890,6 +1890,10 @@
           <label for="cfg-ejs-public" data-i18n="emailjsPublic">Public key</label>
           <input type="text" id="cfg-ejs-public" />
         </div>
+        <div class="full">
+          <label for="cfg-ejs-template-raffle" data-i18n="emailjsTemplateRaffle">Raffle email template ID (optional — falls back to the main template if blank)</label>
+          <input type="text" id="cfg-ejs-template-raffle" data-i18n-placeholder="emailjsTemplateRafflePh" placeholder="e.g. template_raffle_xyz" />
+        </div>
       </div>
 
       <div class="save-config-row">
@@ -2362,6 +2366,8 @@ const I18N = {
     emailjsService: 'Service ID',
     emailjsTemplate: 'Template ID',
     emailjsPublic: 'Public key',
+    emailjsTemplateRaffle: 'Raffle email template ID (optional — falls back to the main template if blank)',
+    emailjsTemplateRafflePh: 'e.g. template_raffle_xyz',
     saveConfig: 'Save settings',
     editConfig: '🔓 Edit settings',
     cancelConfig: 'Cancel',
@@ -2657,6 +2663,8 @@ const I18N = {
     emailjsService: 'ID de service',
     emailjsTemplate: 'ID de modèle',
     emailjsPublic: 'Clé publique',
+    emailjsTemplateRaffle: 'ID du modèle courriel pour tombola (facultatif — utilise le modèle principal si vide)',
+    emailjsTemplateRafflePh: 'ex. template_raffle_xyz',
     saveConfig: 'Enregistrer',
     editConfig: '🔓 Modifier les paramètres',
     cancelConfig: 'Annuler',
@@ -2745,6 +2753,7 @@ let appConfig = {
   archiveEmail: '',
   emailjsServiceId: '',
   emailjsTemplateId: '',
+  emailjsTemplateRaffleId: '',
   emailjsPublicKey: '',
   tables: [], // [{ name, capacity }]
   raffleEnabled: false,
@@ -3667,6 +3676,7 @@ function startListeners() {
         appConfig.archiveEmail = d.archiveEmail || '';
         appConfig.emailjsServiceId = d.emailjsServiceId || '';
         appConfig.emailjsTemplateId = d.emailjsTemplateId || '';
+        appConfig.emailjsTemplateRaffleId = d.emailjsTemplateRaffleId || '';
         appConfig.emailjsPublicKey = d.emailjsPublicKey || '';
         appConfig.tables = Array.isArray(d.tables) ? d.tables : [];
         appConfig.raffleEnabled = !!d.raffleEnabled;
@@ -3695,7 +3705,7 @@ function startListeners() {
 function configInputIds() {
   return ['cfg-public-url','cfg-event-name','cfg-event-date','cfg-event-location',
           'cfg-contact-email','cfg-archive-email',
-          'cfg-ejs-service','cfg-ejs-template','cfg-ejs-public'];
+          'cfg-ejs-service','cfg-ejs-template','cfg-ejs-template-raffle','cfg-ejs-public'];
 }
 
 function applyConfigToInputs() {
@@ -3707,6 +3717,7 @@ function applyConfigToInputs() {
   if ($('cfg-archive-email')) $('cfg-archive-email').value = appConfig.archiveEmail || '';
   if ($('cfg-ejs-service')) $('cfg-ejs-service').value = appConfig.emailjsServiceId || '';
   if ($('cfg-ejs-template')) $('cfg-ejs-template').value = appConfig.emailjsTemplateId || '';
+  if ($('cfg-ejs-template-raffle')) $('cfg-ejs-template-raffle').value = appConfig.emailjsTemplateRaffleId || '';
   if ($('cfg-ejs-public')) $('cfg-ejs-public').value = appConfig.emailjsPublicKey || '';
   // Always lock the form when fresh data arrives from Firestore
   setConfigEditMode(false);
@@ -3749,6 +3760,7 @@ async function saveConfig() {
     archiveEmail: $('cfg-archive-email').value.trim(),
     emailjsServiceId: $('cfg-ejs-service').value.trim(),
     emailjsTemplateId: $('cfg-ejs-template').value.trim(),
+    emailjsTemplateRaffleId: $('cfg-ejs-template-raffle').value.trim(),
     emailjsPublicKey: $('cfg-ejs-public').value.trim(),
   };
   try {
@@ -4238,10 +4250,12 @@ function buildRaffleEmailParams(sale, recipient) {
 async function sendOneRaffleEmail(recipient, sale) {
   if (!emailjsConfigured() || !recipient) return { sent: false };
   tryInitEmailjs();
+  // Use the dedicated raffle template if one is configured; otherwise fall back to the main template.
+  const templateId = (appConfig.emailjsTemplateRaffleId || '').trim() || appConfig.emailjsTemplateId;
   try {
     await emailjs.send(
       appConfig.emailjsServiceId,
-      appConfig.emailjsTemplateId,
+      templateId,
       buildRaffleEmailParams(sale, recipient)
     );
     return { sent: true };
