@@ -2020,6 +2020,7 @@
     <p data-i18n="postSaleSubtitleSecure">The ticket is being delivered automatically to the buyer.</p>
     <div id="post-sale-email-status" style="margin: 14px 0;"></div>
     <div class="modal-actions">
+      <button type="button" class="btn-secondary" id="post-sale-open-ticket" data-i18n="openTicket">Open ticket</button>
       <button type="button" class="btn-primary" id="post-sale-done" data-i18n="done">Done</button>
     </div>
   </div>
@@ -3890,6 +3891,7 @@ async function showPostSaleModal(sale) {
   const status = $('post-sale-email-status');
   status.innerHTML = '';
   $('post-sale-modal').classList.add('show');
+  $('post-sale-open-ticket').onclick = () => window.open(ticketUrlFor(sale.saleId), '_blank', 'noopener');
   $('post-sale-done').onclick = () => $('post-sale-modal').classList.remove('show');
 
   if (!emailjsConfigured()) {
