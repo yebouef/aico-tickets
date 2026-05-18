@@ -2010,29 +2010,22 @@
 <div class="modal-backdrop" id="portal-modal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:999;align-items:center;justify-content:center;padding:20px;">
   <div class="modal" style="background:#fff;border-radius:14px;width:100%;max-width:560px;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.25);max-height:90vh;overflow:auto;color:#1f2937">
     <h2 style="margin:0 0 8px;color:#0d4a6b">Membership Portal Sync Settings</h2>
-    <p style="font-size:13px;color:#64748b;margin:0 0 18px">Configure the connection so ticket sales can be pushed to the AICO Membership Portal as gala payments. Settings are synced across all devices — enter them once and every seller's app picks them up automatically.</p>
+    <p style="font-size:13px;color:#64748b;margin:0 0 18px">Configure the connection so ticket sales can be pushed to the AICO Membership Portal as gala payments. Settings are synced across all devices — enter them once and every seller's app picks them up automatically. Uses a <strong>service role key</strong> (machine-to-machine, no captcha).</p>
     <div style="margin-bottom:14px">
       <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:#64748b;margin-bottom:4px">Supabase Project URL</label>
       <input type="text" id="pm-url" placeholder="https://xxxxxxxx.supabase.co" style="width:100%;padding:9px 11px;border:1px solid #e5e7eb;border-radius:6px;box-sizing:border-box">
     </div>
     <div style="margin-bottom:14px">
-      <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:#64748b;margin-bottom:4px">Supabase anon key</label>
-      <input type="password" id="pm-anon" placeholder="eyJ..." style="width:100%;padding:9px 11px;border:1px solid #e5e7eb;border-radius:6px;font-family:monospace;font-size:11px;box-sizing:border-box">
-    </div>
-    <div style="margin-bottom:14px">
-      <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:#64748b;margin-bottom:4px">Tickets-app service account email</label>
-      <input type="email" id="pm-email" placeholder="tickets-app@aico-system.local" style="width:100%;padding:9px 11px;border:1px solid #e5e7eb;border-radius:6px;box-sizing:border-box">
-    </div>
-    <div style="margin-bottom:14px">
-      <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:#64748b;margin-bottom:4px">Tickets-app service account password</label>
-      <input type="password" id="pm-password" style="width:100%;padding:9px 11px;border:1px solid #e5e7eb;border-radius:6px;box-sizing:border-box">
+      <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:#64748b;margin-bottom:4px">Service role key</label>
+      <input type="password" id="pm-service-key" placeholder="eyJ..." style="width:100%;padding:9px 11px;border:1px solid #e5e7eb;border-radius:6px;font-family:monospace;font-size:11px;box-sizing:border-box">
+      <div style="font-size:11px;color:#64748b;margin-top:4px">In Supabase: Project Settings → API → <strong>service_role</strong> key (under "Project API keys"). This bypasses captcha and RLS.</div>
     </div>
     <div style="margin-bottom:14px">
       <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:#64748b;margin-bottom:4px">Gala event</label>
       <select id="pm-event" style="width:100%;padding:9px 11px;border:1px solid #e5e7eb;border-radius:6px;box-sizing:border-box">
         <option value="">— Connect first to load events —</option>
       </select>
-      <div style="font-size:11px;color:#64748b;margin-top:4px">After saving URL + anon key + service account, click Connect to load the list of events from your Portal.</div>
+      <div style="font-size:11px;color:#64748b;margin-top:4px">After saving URL + service role key, click Connect to load the list of events from your Portal.</div>
     </div>
     <div id="pm-status" style="font-size:12px;margin-bottom:14px;min-height:18px"></div>
     <div style="display:flex;gap:10px;justify-content:flex-end">
@@ -4999,14 +4992,18 @@ function formatPhoneSimple(s){
 function sanitizeUrl(s){ s=(s||'').trim(); const m=s.match(/^(https?:\/\/[^/]+)/i); return m?m[1]:s; }
 
 async function initPortalSupabase(){
-  if(!portalCfg || !portalCfg.url || !portalCfg.anonKey || !portalCfg.email || !portalCfg.password){
+  if(!portalCfg || !portalCfg.url || !portalCfg.serviceRoleKey){
     sbAuthed=false; sbClient=null; return false;
   }
   try {
     if(!window.supabase || !window.supabase.createClient) return false;
-    sbClient = window.supabase.createClient(sanitizeUrl(portalCfg.url), portalCfg.anonKey);
-    const { error } = await sbClient.auth.signInWithPassword({ email: portalCfg.email, password: portalCfg.password });
-    if(error){ console.warn('Portal auth failed:', error); sbAuthed=false; return false; }
+    // Service role key: no email/password sign-in needed, bypasses RLS.
+    sbClient = window.supabase.createClient(sanitizeUrl(portalCfg.url), portalCfg.serviceRoleKey, {
+      auth: { persistSession: false, autoRefreshToken: false }
+    });
+    // Verify the key works by pinging a small read
+    const { error } = await sbClient.from('events').select('id').limit(1);
+    if(error){ console.warn('Portal connect failed:', error); sbAuthed=false; return false; }
     sbAuthed = true;
     await loadPortalDirectory();
     return true;
@@ -5180,9 +5177,8 @@ window.getBuyerInfo = function(){
 function openPortalModal(){
   const cfg = portalCfg || {};
   $$('pm-url').value = cfg.url || '';
-  $$('pm-anon').value = cfg.anonKey || '';
-  $$('pm-email').value = cfg.email || 'tickets-app@aico-system.local';
-  $$('pm-password').value = cfg.password || '';
+  // Accept either the new field name or the legacy anonKey field if migrating
+  $$('pm-service-key').value = cfg.serviceRoleKey || cfg.anonKey || '';
   $$('pm-status').textContent = '';
   if(cfg.galaEventId && cfg.galaEventName){
     $$('pm-event').innerHTML = `<option value="${cfg.galaEventId}" selected>${cfg.galaEventName}</option>`;
@@ -5197,17 +5193,15 @@ async function portalTestConnect(){
   $$('pm-status').textContent='Connecting…'; $$('pm-status').style.color='#64748b';
   const tmpCfg = {
     url: sanitizeUrl($$('pm-url').value.trim()),
-    anonKey: $$('pm-anon').value.trim(),
-    email: $$('pm-email').value.trim(),
-    password: $$('pm-password').value
+    serviceRoleKey: $$('pm-service-key').value.trim(),
   };
-  if(!tmpCfg.url || !tmpCfg.anonKey || !tmpCfg.email || !tmpCfg.password){
-    $$('pm-status').textContent='Fill in all fields first.'; $$('pm-status').style.color='#b91c1c'; return;
+  if(!tmpCfg.url || !tmpCfg.serviceRoleKey){
+    $$('pm-status').textContent='Fill in URL and service role key first.'; $$('pm-status').style.color='#b91c1c'; return;
   }
   try {
-    const tmpClient = window.supabase.createClient(tmpCfg.url, tmpCfg.anonKey);
-    const { error: ae } = await tmpClient.auth.signInWithPassword({ email: tmpCfg.email, password: tmpCfg.password });
-    if(ae){ $$('pm-status').textContent='Sign-in failed: '+ae.message; $$('pm-status').style.color='#b91c1c'; return; }
+    const tmpClient = window.supabase.createClient(tmpCfg.url, tmpCfg.serviceRoleKey, {
+      auth: { persistSession: false, autoRefreshToken: false }
+    });
     const { data: events, error: ee } = await tmpClient.from('events').select('id, name, date, type').in('type',['gala','other','special_contrib']).order('date',{ascending:false});
     if(ee){ $$('pm-status').textContent='Could not load events: '+ee.message; $$('pm-status').style.color='#b91c1c'; return; }
     const sel = $$('pm-event');
@@ -5230,9 +5224,7 @@ async function portalSaveSettings(){
   }
   portalCfg = {
     url: sanitizeUrl($$('pm-url').value.trim()),
-    anonKey: $$('pm-anon').value.trim(),
-    email: $$('pm-email').value.trim(),
-    password: $$('pm-password').value,
+    serviceRoleKey: $$('pm-service-key').value.trim(),
     galaEventId, galaEventName
   };
   // Save full config to Firestore so every device picks it up automatically
@@ -5345,8 +5337,8 @@ try {
     portalCfg = { ...data };
     // Cache locally so the next page load has it instantly
     try { localStorage.setItem(PORTAL_LS_KEY, JSON.stringify(portalCfg)); } catch(e) {}
-    // Auto-connect if we have full credentials
-    if (portalCfg.url && portalCfg.anonKey && portalCfg.email && portalCfg.password && !sbAuthed) {
+    // Auto-connect if we have URL + service role key
+    if (portalCfg.url && portalCfg.serviceRoleKey && !sbAuthed) {
       initPortalSupabase();
     }
   }, (err) => {
