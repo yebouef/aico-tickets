@@ -847,6 +847,90 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* Raffle */
+  .raffle-banner {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border: 1px solid #f59e0b;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+  }
+  .raffle-banner .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #92400e;
+    font-weight: 700;
+  }
+  .raffle-banner .name {
+    font-size: 18px;
+    font-weight: 800;
+    color: #78350f;
+    margin: 2px 0;
+  }
+  .raffle-banner .sub {
+    font-size: 13px;
+    color: #92400e;
+  }
+  .raffle-parsed {
+    margin-top: 8px;
+    padding: 10px 12px;
+    background: #f8fafc;
+    border-radius: 8px;
+    font-size: 13px;
+    border: 1px solid var(--line);
+  }
+  .raffle-parsed .ok { color: var(--good); font-weight: 700; }
+  .raffle-parsed .warn { color: var(--warn); font-weight: 700; }
+  .raffle-parsed .num-chip {
+    display: inline-block;
+    margin: 2px 3px;
+    padding: 2px 7px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-radius: 4px;
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .raffle-parsed .num-chip.dupe {
+    background: var(--bad-soft);
+    color: var(--bad);
+  }
+  .raffle-lookup-result {
+    margin-top: 10px;
+    padding: 14px 16px;
+    background: #f8fafc;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    font-size: 14px;
+  }
+  .raffle-lookup-result.found { border-color: var(--good); background: var(--good-soft); }
+  .raffle-lookup-result.not-found { border-color: var(--warn); background: var(--warn-soft); }
+  .raffle-lookup-result .winner-name {
+    font-size: 24px;
+    font-weight: 800;
+    margin: 4px 0;
+  }
+  .raffle-lookup-result .winner-detail {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin: 2px 0;
+  }
+  .raffle-lookup-result .winner-phone {
+    font-family: ui-monospace, Menlo, monospace;
+    font-weight: 700;
+    color: var(--ink);
+    font-size: 16px;
+  }
+  .raffle-lookup-row {
+    display: grid;
+    grid-template-columns: 1fr 100px;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .raffle-lookup-row input { font-size: 18px; padding: 12px 14px; }
+
   /* Complimentary tickets */
   .comp-row {
     display: grid;
@@ -1289,6 +1373,7 @@
     </div>
     <div class="tabs" id="tabs" role="tablist" style="display:none;">
       <button class="tab active" id="tab-sales" data-view="sales" data-i18n="tabSales">Sales Entry</button>
+      <button class="tab" id="tab-raffle" data-view="raffle" style="display:none;" data-i18n="tabRaffle">🎟 Raffle</button>
       <button class="tab" id="tab-dashboard" data-view="dashboard" data-i18n="tabDashboard">Dashboard</button>
       <button class="tab" id="tab-scanner" title="Opens the scanner in a new tab" data-i18n="tabScannerNav">📷 Scanner</button>
     </div>
@@ -1469,6 +1554,87 @@
 
   </section>
 
+  <!-- ============ RAFFLE SALE VIEW ============ -->
+  <section class="view" id="view-raffle">
+    <div class="card">
+      <h2 data-i18n="raffleSaleTitle">Sell Raffle Tickets</h2>
+
+      <div class="raffle-banner" id="raffle-banner">
+        <div class="label" data-i18n="raffleLabel">Raffle</div>
+        <div class="name" id="raffle-banner-name">—</div>
+        <div class="sub" id="raffle-banner-sub">—</div>
+      </div>
+
+      <form id="raffle-form" autocomplete="off">
+        <div class="grid-2">
+          <div>
+            <label for="raffle-buyer-name" data-i18n="raffleBuyerName">Buyer name</label>
+            <input type="text" id="raffle-buyer-name" required />
+          </div>
+          <div>
+            <label for="raffle-buyer-phone" data-i18n="rafflePhone">Phone</label>
+            <input type="tel" id="raffle-buyer-phone" required />
+          </div>
+        </div>
+
+        <div style="margin-top:14px;">
+          <label for="raffle-buyer-email" data-i18n="raffleEmail">Email (optional)</label>
+          <input type="email" id="raffle-buyer-email" data-i18n-placeholder="raffleEmailPh" placeholder="To send their numbers" />
+        </div>
+
+        <div class="grid-2" style="margin-top:14px;">
+          <div>
+            <label for="raffle-start-number" data-i18n="raffleStartNumber">Starting ticket number</label>
+            <input type="text" id="raffle-start-number" data-i18n-placeholder="raffleStartNumberPh" placeholder="e.g. 20096-001" required />
+          </div>
+          <div>
+            <label for="raffle-count" data-i18n="raffleCount">Number of tickets</label>
+            <input type="number" id="raffle-count" min="1" value="1" required />
+          </div>
+        </div>
+
+        <div class="raffle-parsed" id="raffle-parsed" style="display:none;"></div>
+
+        <div class="grid-2" style="margin-top:14px;">
+          <div>
+            <label for="raffle-payment" data-i18n="paymentMethod">Payment method</label>
+            <select id="raffle-payment" required>
+              <option value="" data-i18n="selectPlaceholder">Select...</option>
+              <option value="Cash" data-i18n="payCash">Cash</option>
+              <option value="Zelle">Zelle</option>
+              <option value="Other" data-i18n="payOther">Other</option>
+            </select>
+            <input type="text" id="raffle-payment-other" style="display:none; margin-top:8px;" data-i18n-placeholder="payOtherPlaceholder" placeholder="Specify other method..." />
+          </div>
+          <div>
+            <label for="raffle-amount-received" data-i18n="amountReceivedLabel">Amount received ($)</label>
+            <input type="number" id="raffle-amount-received" min="0" step="0.01" value="0" />
+          </div>
+        </div>
+
+        <div class="totals">
+          <div class="stat">
+            <div class="label" data-i18n="totalExpected">Total Expected</div>
+            <div class="value" id="raffle-total-expected">$0.00</div>
+          </div>
+          <div class="stat">
+            <div class="label" data-i18n="amountReceived">Amount Received</div>
+            <div class="value" id="raffle-total-received">$0.00</div>
+          </div>
+          <div class="stat">
+            <div class="label" data-i18n="balanceDue">Balance Due</div>
+            <div class="value balance-zero" id="raffle-balance">$0.00</div>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-ghost" id="raffle-reset-btn" data-i18n="clearForm">Clear form</button>
+          <button type="submit" class="btn-primary" id="raffle-submit-btn" data-i18n="raffleRecord">Record raffle sale</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
   <!-- ============ DASHBOARD VIEW ============ -->
   <section class="view" id="view-dashboard">
 
@@ -1594,6 +1760,93 @@
           <input type="text" id="new-seller-password" />
         </div>
         <button type="button" class="btn-primary" id="add-seller-btn" data-i18n="addSeller">+ Add seller</button>
+      </div>
+    </div>
+
+    <div class="card config-locked" id="raffle-config-card">
+      <div class="config-header">
+        <h2 data-i18n="raffleSetupTitle">Raffle Setup</h2>
+        <span class="config-status locked" id="raffle-config-status" data-i18n="configStatusLocked">Locked</span>
+      </div>
+      <p style="margin: -6px 0 12px 0; font-size: 12px; color: var(--ink-soft);" data-i18n="raffleSetupHelp">
+        Enable the raffle and configure ticket info. The Raffle tab appears for sellers when enabled.
+      </p>
+      <div class="config-grid">
+        <div class="full" style="display:flex; align-items:center; gap:10px;">
+          <input type="checkbox" id="cfg-raffle-enabled" style="width:auto; margin:0;" />
+          <label for="cfg-raffle-enabled" style="margin:0; text-transform:none; letter-spacing:0; font-size:14px; cursor:pointer;" data-i18n="raffleEnableLabel">Enable raffle ticket sales</label>
+        </div>
+        <div class="full">
+          <label for="cfg-raffle-name" data-i18n="raffleName">Raffle name</label>
+          <input type="text" id="cfg-raffle-name" data-i18n-placeholder="raffleNamePh" placeholder="e.g. AICO Gala 2026 Grand Prize" />
+        </div>
+        <div class="full">
+          <label for="cfg-raffle-prize" data-i18n="rafflePrize">Prize description</label>
+          <input type="text" id="cfg-raffle-prize" data-i18n-placeholder="rafflePrizePh" placeholder="e.g. $500 cash + dinner for two" />
+        </div>
+        <div>
+          <label for="cfg-raffle-price" data-i18n="raffleTicketPrice">Price per ticket ($)</label>
+          <input type="number" id="cfg-raffle-price" min="0.01" step="0.01" value="5" />
+        </div>
+      </div>
+      <div class="save-config-row">
+        <button type="button" class="btn-secondary" id="edit-raffle-config-btn" data-i18n="editConfig">🔓 Edit settings</button>
+        <button type="button" class="btn-ghost" id="cancel-raffle-config-btn" style="display:none;" data-i18n="cancelConfig">Cancel</button>
+        <button type="button" class="btn-primary" id="save-raffle-config-btn" style="display:none;" data-i18n="saveConfig">Save settings</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 data-i18n="raffleSalesTitle">Raffle Sales</h2>
+
+      <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 16px;">
+        <div class="kpi">
+          <div class="label" data-i18n="raffleKpiSold">Tickets Sold</div>
+          <div class="value" id="raffle-kpi-sold">0</div>
+        </div>
+        <div class="kpi">
+          <div class="label" data-i18n="raffleKpiRevenue">Raffle Revenue</div>
+          <div class="value" id="raffle-kpi-revenue">$0</div>
+        </div>
+        <div class="kpi">
+          <div class="label" data-i18n="raffleKpiBuyers">Unique Buyers</div>
+          <div class="value" id="raffle-kpi-buyers">0</div>
+        </div>
+      </div>
+
+      <h3 style="margin: 12px 0 8px 0; font-size: 14px; text-transform: uppercase; letter-spacing: .8px; color: var(--ink-soft);" data-i18n="raffleLookupTitle">Look up by ticket number (for the draw)</h3>
+      <p style="margin: 0 0 10px 0; font-size: 12px; color: var(--ink-soft);" data-i18n="raffleLookupHelp">
+        When you pull a number from the bowl, type it here to find the buyer.
+      </p>
+      <div class="raffle-lookup-row">
+        <input type="text" id="raffle-lookup-input" data-i18n-placeholder="raffleLookupPh" placeholder="e.g. 20096-001" />
+        <button type="button" class="btn-primary" id="raffle-lookup-btn" data-i18n="raffleLookupBtn">Search</button>
+      </div>
+      <div id="raffle-lookup-result"></div>
+
+      <h3 style="margin: 22px 0 8px 0; font-size: 14px; text-transform: uppercase; letter-spacing: .8px; color: var(--ink-soft);" data-i18n="raffleSalesLogTitle">All Raffle Sales</h3>
+      <div class="toolbar">
+        <input type="text" id="raffle-search" data-i18n-placeholder="raffleSearchPh" placeholder="Search by buyer name or ticket number..." />
+        <button type="button" class="btn-secondary" id="raffle-export-csv" data-i18n="exportCsv">Export CSV</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th data-i18n="thDate">Date</th>
+              <th data-i18n="raffleBuyerName">Buyer name</th>
+              <th data-i18n="rafflePhone">Phone</th>
+              <th data-i18n="raffleTicketsCol">Tickets</th>
+              <th class="num" data-i18n="thQty">Qty</th>
+              <th class="num" data-i18n="thSaleTotal">Total</th>
+              <th data-i18n="thPayment">Payment</th>
+              <th data-i18n="thSeller">Seller</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="raffle-log-body"></tbody>
+        </table>
+        <div id="raffle-log-empty" class="empty" data-i18n="raffleEmpty">No raffle sales yet.</div>
       </div>
     </div>
 
@@ -1908,6 +2161,47 @@ const I18N = {
     outstandingBalance: 'Outstanding Balance',
     initialInventory: 'Initial Inventory',
     adjustIfNeeded: 'Adjust if needed',
+    tabRaffle: '🎟 Raffle',
+    raffleSaleTitle: 'Sell Raffle Tickets',
+    raffleLabel: 'Raffle',
+    raffleBuyerName: 'Buyer name',
+    rafflePhone: 'Phone',
+    raffleEmail: 'Email (optional)',
+    raffleEmailPh: 'To send their numbers',
+    raffleStartNumber: 'Starting ticket number',
+    raffleStartNumberPh: 'e.g. 20096-001',
+    raffleCount: 'Number of tickets',
+    raffleRecord: 'Record raffle sale',
+    raffleParsedLabel: 'Will record:',
+    raffleParsedDupes: '⚠ Already sold: ',
+    raffleConfirmDupes: 'Some ticket numbers are already sold. Continue anyway?',
+    raffleAlertNoTickets: 'Please enter a starting number and count.',
+    raffleAlertDisabled: 'Raffle is not enabled. Ask the admin to enable it in the dashboard.',
+    raffleSetupTitle: 'Raffle Setup',
+    raffleSetupHelp: 'Enable the raffle and configure ticket info. The Raffle tab appears for sellers when enabled.',
+    raffleEnableLabel: 'Enable raffle ticket sales',
+    raffleName: 'Raffle name',
+    raffleNamePh: 'e.g. AICO Gala 2026 Grand Prize',
+    rafflePrize: 'Prize description',
+    rafflePrizePh: 'e.g. $500 cash + dinner for two',
+    raffleTicketPrice: 'Price per ticket ($)',
+    raffleSalesTitle: 'Raffle Sales',
+    raffleKpiSold: 'Tickets Sold',
+    raffleKpiRevenue: 'Raffle Revenue',
+    raffleKpiBuyers: 'Unique Buyers',
+    raffleLookupTitle: 'Look up by ticket number (for the draw)',
+    raffleLookupHelp: 'When you pull a number from the bowl, type it here to find the buyer.',
+    raffleLookupPh: 'e.g. 20096-001',
+    raffleLookupBtn: 'Search',
+    raffleLookupFound: 'Winner found',
+    raffleLookupNotFound: 'No buyer for ticket {n}. (Either not sold, or wrong number.)',
+    raffleSalesLogTitle: 'All Raffle Sales',
+    raffleSearchPh: 'Search by buyer name or ticket number...',
+    raffleTicketsCol: 'Numbers',
+    raffleEmpty: 'No raffle sales yet.',
+    toastRaffleSold: 'Raffle ticket sale recorded.',
+    confirmDeleteRaffle: 'Delete this raffle sale? This cannot be undone.',
+    raffleNotConfigured: 'Set the raffle name and price in the admin dashboard first.',
     compsTitle: 'Complimentary Tickets (VIPs & Guests)',
     compsHelp: 'Free tickets for VIPs, sponsors, board members, etc. They don\'t affect sales totals but still get QR codes and can be assigned to tables.',
     compsEmpty: 'No complimentary tickets yet.',
@@ -2153,6 +2447,47 @@ const I18N = {
     outstandingBalance: 'Solde impayé',
     initialInventory: 'Inventaire initial',
     adjustIfNeeded: 'Ajuster au besoin',
+    tabRaffle: '🎟 Tombola',
+    raffleSaleTitle: 'Vendre des billets de tombola',
+    raffleLabel: 'Tombola',
+    raffleBuyerName: 'Nom de l’acheteur',
+    rafflePhone: 'Téléphone',
+    raffleEmail: 'Courriel (facultatif)',
+    raffleEmailPh: 'Pour envoyer ses numéros',
+    raffleStartNumber: 'Numéro de billet de départ',
+    raffleStartNumberPh: 'ex. 20096-001',
+    raffleCount: 'Nombre de billets',
+    raffleRecord: 'Enregistrer la vente',
+    raffleParsedLabel: 'Sera enregistré :',
+    raffleParsedDupes: '⚠ Déjà vendus : ',
+    raffleConfirmDupes: 'Certains numéros sont déjà vendus. Continuer quand même ?',
+    raffleAlertNoTickets: 'Veuillez saisir un numéro de départ et un nombre.',
+    raffleAlertDisabled: 'La tombola n’est pas activée. Demandez à l’admin de l’activer.',
+    raffleSetupTitle: 'Configuration de la tombola',
+    raffleSetupHelp: 'Activez la tombola et configurez les informations. L’onglet Tombola apparaît pour les vendeurs.',
+    raffleEnableLabel: 'Activer la vente de billets de tombola',
+    raffleName: 'Nom de la tombola',
+    raffleNamePh: 'ex. Grand Prix Gala AICO 2026',
+    rafflePrize: 'Description du prix',
+    rafflePrizePh: 'ex. 500 $ en espèces + dîner pour deux',
+    raffleTicketPrice: 'Prix par billet ($)',
+    raffleSalesTitle: 'Ventes de tombola',
+    raffleKpiSold: 'Billets vendus',
+    raffleKpiRevenue: 'Recettes tombola',
+    raffleKpiBuyers: 'Acheteurs uniques',
+    raffleLookupTitle: 'Rechercher par numéro (pour le tirage)',
+    raffleLookupHelp: 'Quand vous tirez un numéro du bol, saisissez-le ici pour trouver l’acheteur.',
+    raffleLookupPh: 'ex. 20096-001',
+    raffleLookupBtn: 'Rechercher',
+    raffleLookupFound: 'Gagnant trouvé',
+    raffleLookupNotFound: 'Aucun acheteur pour le billet {n}. (Non vendu ou mauvais numéro.)',
+    raffleSalesLogTitle: 'Toutes les ventes de tombola',
+    raffleSearchPh: 'Rechercher par nom ou numéro...',
+    raffleTicketsCol: 'Numéros',
+    raffleEmpty: 'Aucune vente de tombola.',
+    toastRaffleSold: 'Vente de billets de tombola enregistrée.',
+    confirmDeleteRaffle: 'Supprimer cette vente de tombola ? Cette action est irréversible.',
+    raffleNotConfigured: 'Configurez d’abord le nom et le prix de la tombola dans le tableau de bord.',
     compsTitle: 'Billets de courtoisie (VIPs et invités)',
     compsHelp: 'Billets gratuits pour les VIPs, sponsors, membres du conseil, etc. Ils n’affectent pas les ventes mais reçoivent un QR code et peuvent être placés à une table.',
     compsEmpty: 'Aucun billet de courtoisie pour l’instant.',
@@ -2345,6 +2680,7 @@ const ADMIN_PASSWORD = 'AICO2026';
 let sales = [];
 let sellers = [];
 let comps = []; // complimentary tickets (VIPs / guests)
+let raffleSales = []; // raffle ticket sales
 let inventory = 100;
 let appConfig = {
   publicUrl: '',
@@ -2357,6 +2693,10 @@ let appConfig = {
   emailjsTemplateId: '',
   emailjsPublicKey: '',
   tables: [], // [{ name, capacity }]
+  raffleEnabled: false,
+  raffleName: '',
+  rafflePrize: '',
+  raffleTicketPrice: 5,
 };
 let lang = localStorage.getItem(LANG_KEY) || 'en';
 let currentUser = JSON.parse(sessionStorage.getItem(USER_KEY) || 'null');
@@ -2387,6 +2727,7 @@ const formatDate = (iso) => {
 };
 const uid = () => 'S' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2,5).toUpperCase();
 const compUid = () => 'C' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2,5).toUpperCase();
+const raffleUid = () => 'R' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).slice(2,5).toUpperCase();
 const escapeHtml = (s) => String(s ?? '').replace(/[&<>"']/g, c =>
   ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
@@ -3027,6 +3368,53 @@ $('new-seller-password').addEventListener('keydown', (e) => {
 $('save-config-btn').addEventListener('click', saveConfig);
 $('edit-config-btn').addEventListener('click', () => setConfigEditMode(true));
 
+// Raffle
+$('raffle-form').addEventListener('submit', submitRaffleSale);
+$('raffle-reset-btn').addEventListener('click', resetRaffleForm);
+$('raffle-start-number').addEventListener('input', updateRaffleParseAndTotals);
+$('raffle-count').addEventListener('input', updateRaffleParseAndTotals);
+$('raffle-amount-received').addEventListener('input', updateRaffleParseAndTotals);
+$('raffle-payment').addEventListener('change', () => {
+  const isOther = $('raffle-payment').value === 'Other';
+  const o = $('raffle-payment-other');
+  o.style.display = isOther ? 'block' : 'none';
+  o.required = isOther;
+  if (!isOther) o.value = '';
+});
+$('save-raffle-config-btn').addEventListener('click', saveRaffleConfig);
+$('edit-raffle-config-btn').addEventListener('click', () => setRaffleConfigEditMode(true));
+$('cancel-raffle-config-btn').addEventListener('click', () => applyRaffleConfigToUI());
+$('raffle-lookup-btn').addEventListener('click', doRaffleLookup);
+$('raffle-lookup-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); doRaffleLookup(); }
+});
+$('raffle-search').addEventListener('input', renderRaffleLog);
+$('raffle-export-csv').addEventListener('click', () => {
+  if (raffleSales.length === 0) { alert(t('alertNoSalesExport')); return; }
+  const headers = [t('thDate'),t('raffleBuyerName'),t('rafflePhone'),t('raffleEmail'),t('raffleTicketsCol'),t('thQty'),'Unit',t('thSaleTotal'),t('thReceived'),t('thBalance'),t('thPayment'),t('thSeller')];
+  const rows = [headers];
+  for (const s of raffleSales) {
+    rows.push([
+      s.date, s.buyer || '', s.buyerPhone || '', s.buyerEmail || '',
+      (s.ticketNumbers || []).join('; '),
+      s.quantity || 0, (s.unitPrice || 0).toFixed(2),
+      (s.total || 0).toFixed(2), (s.received || 0).toFixed(2), (s.balance || 0).toFixed(2),
+      localizePayment(s.payment, s.paymentOther), s.seller || '',
+    ]);
+  }
+  const csv = rows.map(r => r.map(v => {
+    const x = String(v);
+    return /[",\n]/.test(x) ? `"${x.replace(/"/g,'""')}"` : x;
+  }).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `aico-raffle-sales-${todayISO()}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
 // Complimentary tickets
 $('add-comp-btn').addEventListener('click', addComp);
 $('new-comp-notes').addEventListener('keydown', (e) => {
@@ -3125,8 +3513,8 @@ function hideSplash() {
 
 function startListeners() {
   return new Promise((resolve) => {
-    let firstSales = false, firstSellers = false, firstConfig = false, firstComps = false;
-    function check() { if (firstSales && firstSellers && firstConfig && firstComps) resolve(); }
+    let firstSales = false, firstSellers = false, firstConfig = false, firstComps = false, firstRaffle = false;
+    function check() { if (firstSales && firstSellers && firstConfig && firstComps && firstRaffle) resolve(); }
 
     onSnapshot(query(collection(db, 'sales'), orderBy('createdAt', 'desc')), snap => {
       sales = snap.docs.map(d => {
@@ -3169,6 +3557,16 @@ function startListeners() {
       firstComps = true; check();
     });
 
+    onSnapshot(query(collection(db, 'raffleSales'), orderBy('createdAt', 'desc')), snap => {
+      raffleSales = snap.docs.map(d => ({ ...d.data(), _docId: d.id }));
+      firstRaffle = true; check();
+      renderRaffleLog();
+      renderRaffleStats();
+    }, err => {
+      showToast(t('toastError') + err.message, true);
+      firstRaffle = true; check();
+    });
+
     onSnapshot(doc(db, 'config', 'app'), snap => {
       if (snap.exists()) {
         const d = snap.data();
@@ -3186,10 +3584,15 @@ function startListeners() {
         appConfig.emailjsTemplateId = d.emailjsTemplateId || '';
         appConfig.emailjsPublicKey = d.emailjsPublicKey || '';
         appConfig.tables = Array.isArray(d.tables) ? d.tables : [];
+        appConfig.raffleEnabled = !!d.raffleEnabled;
+        appConfig.raffleName = d.raffleName || '';
+        appConfig.rafflePrize = d.rafflePrize || '';
+        appConfig.raffleTicketPrice = Number(d.raffleTicketPrice) || 5;
         applyConfigToInputs();
         tryInitEmailjs();
         renderTablesList();
         renderTableAssignments();
+        applyRaffleConfigToUI();
       } else {
         setDoc(doc(db, 'config', 'app'), { inventory: 100 }, { merge: true })
           .catch(e => console.warn('Could not seed config', e));
@@ -3549,6 +3952,300 @@ async function renderTicketView(ticketId) {
     <div class="ticket-footer">
       ${escapeHtml(t('tFooter'))}
       ${appConfig.contactEmail ? `<br><a href="mailto:${escapeHtml(appConfig.contactEmail)}" style="color:var(--accent);">${escapeHtml(appConfig.contactEmail)}</a>` : ''}
+    </div>
+  `;
+}
+
+// =============== RAFFLE ===============
+function expandRaffleNumbers(start, count) {
+  // "20096-001" + 5 → ["20096-001", "20096-002", ..., "20096-005"]
+  const s = String(start || '').trim();
+  if (!s || !count || count < 1) return [];
+  const m = s.match(/^(.*?)(\d+)$/);
+  if (!m) return [s]; // No trailing number — can't expand, just take the literal
+  const [, prefix, numStr] = m;
+  const startNum = parseInt(numStr, 10);
+  const padLen = numStr.length;
+  const result = [];
+  for (let i = 0; i < count; i++) {
+    result.push(prefix + String(startNum + i).padStart(padLen, '0'));
+  }
+  return result;
+}
+
+function allSoldRaffleNumbers() {
+  const set = new Set();
+  for (const sale of raffleSales) {
+    for (const n of (sale.ticketNumbers || [])) set.add(String(n).trim());
+  }
+  return set;
+}
+
+function findRaffleSaleByNumber(ticketNumber) {
+  const target = String(ticketNumber || '').trim();
+  if (!target) return null;
+  for (const sale of raffleSales) {
+    if ((sale.ticketNumbers || []).some(n => String(n).trim() === target)) return sale;
+  }
+  return null;
+}
+
+function applyRaffleConfigToUI() {
+  // Reflect appConfig.raffleEnabled into the tab and form state
+  const tab = $('tab-raffle');
+  if (tab) tab.style.display = appConfig.raffleEnabled ? '' : 'none';
+  // Banner content
+  const name = $('raffle-banner-name');
+  const sub = $('raffle-banner-sub');
+  if (name) name.textContent = appConfig.raffleName || (appConfig.raffleEnabled ? t('raffleLabel') : '—');
+  if (sub) {
+    const bits = [];
+    if (appConfig.rafflePrize) bits.push(appConfig.rafflePrize);
+    if (appConfig.raffleTicketPrice) bits.push(fmt(appConfig.raffleTicketPrice) + ' / ticket');
+    sub.textContent = bits.join(' · ') || '—';
+  }
+  // Raffle config inputs
+  if ($('cfg-raffle-enabled')) $('cfg-raffle-enabled').checked = !!appConfig.raffleEnabled;
+  if ($('cfg-raffle-name')) $('cfg-raffle-name').value = appConfig.raffleName || '';
+  if ($('cfg-raffle-prize')) $('cfg-raffle-prize').value = appConfig.rafflePrize || '';
+  if ($('cfg-raffle-price')) $('cfg-raffle-price').value = appConfig.raffleTicketPrice || 5;
+  setRaffleConfigEditMode(false);
+  updateRaffleParseAndTotals();
+}
+
+function setRaffleConfigEditMode(on) {
+  const card = $('raffle-config-card');
+  if (!card) return;
+  const inputs = ['cfg-raffle-enabled','cfg-raffle-name','cfg-raffle-prize','cfg-raffle-price'];
+  inputs.forEach(id => {
+    const el = $(id);
+    if (!el) return;
+    if (el.type === 'checkbox') {
+      el.disabled = !on;
+    } else if (on) {
+      el.removeAttribute('readonly');
+    } else {
+      el.setAttribute('readonly', 'readonly');
+    }
+  });
+  if (on) {
+    card.classList.remove('config-locked');
+    $('raffle-config-status').className = 'config-status editing';
+    $('raffle-config-status').textContent = t('configStatusEditing');
+    $('edit-raffle-config-btn').style.display = 'none';
+    $('cancel-raffle-config-btn').style.display = 'inline-flex';
+    $('save-raffle-config-btn').style.display = 'inline-flex';
+  } else {
+    card.classList.add('config-locked');
+    $('raffle-config-status').className = 'config-status locked';
+    $('raffle-config-status').textContent = t('configStatusLocked');
+    $('edit-raffle-config-btn').style.display = 'inline-flex';
+    $('cancel-raffle-config-btn').style.display = 'none';
+    $('save-raffle-config-btn').style.display = 'none';
+  }
+}
+
+async function saveRaffleConfig() {
+  if (!confirm(t('confirmSaveConfig'))) return;
+  const data = {
+    raffleEnabled: !!$('cfg-raffle-enabled').checked,
+    raffleName: $('cfg-raffle-name').value.trim(),
+    rafflePrize: $('cfg-raffle-prize').value.trim(),
+    raffleTicketPrice: parseFloat($('cfg-raffle-price').value) || 5,
+  };
+  try {
+    await setDoc(doc(db, 'config', 'app'), data, { merge: true });
+    setRaffleConfigEditMode(false);
+    showToast(t('toastConfigSaved'));
+  } catch (e) {
+    showToast(t('toastError') + e.message, true);
+  }
+}
+
+function updateRaffleParseAndTotals() {
+  const startEl = $('raffle-start-number');
+  const countEl = $('raffle-count');
+  const parsedEl = $('raffle-parsed');
+  if (!startEl || !countEl || !parsedEl) return;
+
+  const start = startEl.value.trim();
+  const count = parseInt(countEl.value, 10) || 0;
+  const price = Number(appConfig.raffleTicketPrice) || 0;
+
+  if (!start || count < 1) {
+    parsedEl.style.display = 'none';
+    $('raffle-total-expected').textContent = fmt(0);
+    return;
+  }
+
+  const numbers = expandRaffleNumbers(start, count);
+  const sold = allSoldRaffleNumbers();
+  const dupes = numbers.filter(n => sold.has(n));
+
+  const chips = numbers.map(n => {
+    const isDupe = dupes.includes(n);
+    return `<span class="num-chip ${isDupe ? 'dupe' : ''}">${escapeHtml(n)}</span>`;
+  }).join('');
+
+  parsedEl.style.display = 'block';
+  parsedEl.innerHTML = `
+    <div>${escapeHtml(t('raffleParsedLabel'))} <span class="ok">${numbers.length} × ${fmt(price)} = ${fmt(numbers.length * price)}</span></div>
+    <div style="margin-top:6px;">${chips}</div>
+    ${dupes.length > 0 ? `<div style="margin-top:6px;" class="warn">${escapeHtml(t('raffleParsedDupes'))}${dupes.map(escapeHtml).join(', ')}</div>` : ''}
+  `;
+
+  const total = numbers.length * price;
+  const received = parseFloat($('raffle-amount-received').value) || 0;
+  const balance = total - received;
+  $('raffle-total-expected').textContent = fmt(total);
+  $('raffle-total-received').textContent = fmt(received);
+  const balEl = $('raffle-balance');
+  balEl.textContent = fmt(balance);
+  balEl.className = 'value ' + (balance > 0.001 ? 'balance-due' : balance < -0.001 ? 'balance-paid' : 'balance-zero');
+}
+
+function resetRaffleForm() {
+  $('raffle-form').reset();
+  $('raffle-count').value = '1';
+  $('raffle-amount-received').value = '0';
+  $('raffle-parsed').style.display = 'none';
+  $('raffle-payment-other').style.display = 'none';
+  $('raffle-payment-other').value = '';
+  $('raffle-payment-other').required = false;
+  updateRaffleParseAndTotals();
+}
+
+async function submitRaffleSale(e) {
+  e.preventDefault();
+  if (!appConfig.raffleEnabled) { alert(t('raffleAlertDisabled')); return; }
+  if (!appConfig.raffleName || !appConfig.raffleTicketPrice) { alert(t('raffleNotConfigured')); return; }
+  if (!currentUser || currentUser.role !== 'seller') return;
+
+  const start = $('raffle-start-number').value.trim();
+  const count = parseInt($('raffle-count').value, 10) || 0;
+  if (!start || count < 1) { alert(t('raffleAlertNoTickets')); return; }
+
+  const paymentVal = $('raffle-payment').value;
+  const paymentOtherVal = $('raffle-payment-other').value.trim();
+  if (paymentVal === 'Other' && !paymentOtherVal) {
+    alert(t('alertSpecifyOther'));
+    $('raffle-payment-other').focus();
+    return;
+  }
+
+  const numbers = expandRaffleNumbers(start, count);
+  const sold = allSoldRaffleNumbers();
+  const dupes = numbers.filter(n => sold.has(n));
+  if (dupes.length > 0) {
+    if (!confirm(t('raffleConfirmDupes') + '\n\n' + dupes.join(', '))) return;
+  }
+
+  const price = Number(appConfig.raffleTicketPrice) || 0;
+  const total = numbers.length * price;
+  const received = parseFloat($('raffle-amount-received').value) || 0;
+  const saleId = raffleUid();
+  const sale = {
+    saleId,
+    date: todayISO(),
+    buyer: $('raffle-buyer-name').value.trim(),
+    buyerPhone: $('raffle-buyer-phone').value.trim(),
+    buyerEmail: $('raffle-buyer-email').value.trim(),
+    seller: currentUser.name,
+    payment: paymentVal,
+    paymentOther: paymentVal === 'Other' ? paymentOtherVal : '',
+    ticketNumbers: numbers,
+    quantity: numbers.length,
+    unitPrice: price,
+    total,
+    received,
+    balance: total - received,
+    raffleName: appConfig.raffleName,
+  };
+
+  const btn = $('raffle-submit-btn');
+  btn.disabled = true;
+  try {
+    await setDoc(doc(db, 'raffleSales', saleId), {
+      ...sale,
+      createdAt: serverTimestamp(),
+    });
+    resetRaffleForm();
+    showToast(t('toastRaffleSold'));
+  } catch (err) {
+    showToast(t('toastError') + err.message, true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function renderRaffleStats() {
+  const totalSold = raffleSales.reduce((s, sale) => s + (Number(sale.quantity) || 0), 0);
+  const revenue = raffleSales.reduce((s, sale) => s + (Number(sale.total) || 0), 0);
+  const buyerSet = new Set();
+  for (const sale of raffleSales) {
+    const key = (sale.buyer || '').toLowerCase().trim() + '|' + (sale.buyerPhone || '').replace(/\D/g, '');
+    if (key.length > 1) buyerSet.add(key);
+  }
+  if ($('raffle-kpi-sold')) $('raffle-kpi-sold').textContent = totalSold;
+  if ($('raffle-kpi-revenue')) $('raffle-kpi-revenue').textContent = fmt(revenue);
+  if ($('raffle-kpi-buyers')) $('raffle-kpi-buyers').textContent = buyerSet.size;
+}
+
+function renderRaffleLog() {
+  const tbody = $('raffle-log-body');
+  if (!tbody) return;
+  const search = ($('raffle-search')?.value || '').trim().toLowerCase();
+  tbody.innerHTML = '';
+  let visible = 0;
+  for (const sale of raffleSales) {
+    const nums = (sale.ticketNumbers || []).join(', ');
+    const haystack = `${sale.buyer || ''} ${sale.buyerPhone || ''} ${nums}`.toLowerCase();
+    if (search && !haystack.includes(search)) continue;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${escapeHtml(formatDate(sale.date))}</td>
+      <td><strong>${escapeHtml(sale.buyer || '—')}</strong></td>
+      <td>${escapeHtml(sale.buyerPhone || '—')}</td>
+      <td style="font-family: ui-monospace, Menlo, monospace; font-size: 12px;">${escapeHtml(nums)}</td>
+      <td class="num">${sale.quantity || 0}</td>
+      <td class="num"><strong>${fmt(sale.total)}</strong></td>
+      <td>${escapeHtml(localizePayment(sale.payment, sale.paymentOther))}</td>
+      <td>${escapeHtml(sale.seller || '—')}</td>
+      <td><button class="btn-ghost" data-rm-raffle="${escapeHtml(sale.saleId)}">${escapeHtml(t('delete'))}</button></td>
+    `;
+    tbody.appendChild(tr);
+    visible++;
+  }
+  $('raffle-log-empty').style.display = visible === 0 ? 'block' : 'none';
+  tbody.querySelectorAll('[data-rm-raffle]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-rm-raffle');
+      if (!confirm(t('confirmDeleteRaffle'))) return;
+      try { await deleteDoc(doc(db, 'raffleSales', id)); }
+      catch (e) { showToast(t('toastError') + e.message, true); }
+    });
+  });
+}
+
+function doRaffleLookup() {
+  const num = $('raffle-lookup-input').value.trim();
+  const out = $('raffle-lookup-result');
+  if (!num) { out.innerHTML = ''; return; }
+  const sale = findRaffleSaleByNumber(num);
+  if (!sale) {
+    out.innerHTML = `<div class="raffle-lookup-result not-found">${escapeHtml(t('raffleLookupNotFound').replace('{n}', num))}</div>`;
+    return;
+  }
+  const dateStr = sale.createdAt && sale.createdAt.toDate ? sale.createdAt.toDate().toLocaleString(I18N[lang].locale) : '';
+  out.innerHTML = `
+    <div class="raffle-lookup-result found">
+      <div style="font-size:12px; text-transform:uppercase; letter-spacing:1px; color: var(--good); font-weight:700;">${escapeHtml(t('raffleLookupFound'))} — #${escapeHtml(num)}</div>
+      <div class="winner-name">${escapeHtml(sale.buyer || '—')}</div>
+      <div class="winner-detail">📞 <span class="winner-phone">${escapeHtml(sale.buyerPhone || '—')}</span></div>
+      ${sale.buyerEmail ? `<div class="winner-detail">✉️ ${escapeHtml(sale.buyerEmail)}</div>` : ''}
+      <div class="winner-detail">${escapeHtml(t('thSeller'))}: ${escapeHtml(sale.seller || '—')}</div>
+      <div class="winner-detail">${escapeHtml(t('thDate'))}: ${escapeHtml(dateStr)}</div>
+      <div class="winner-detail" style="margin-top:6px; font-size:12px;">All tickets on this purchase: ${escapeHtml((sale.ticketNumbers || []).join(', '))}</div>
     </div>
   `;
 }
