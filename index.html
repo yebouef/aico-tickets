@@ -1566,20 +1566,35 @@
       </div>
 
       <form id="raffle-form" autocomplete="off">
-        <div class="grid-2">
-          <div>
-            <label for="raffle-buyer-name" data-i18n="raffleBuyerName">Buyer name</label>
-            <input type="text" id="raffle-buyer-name" required />
+        <div style="margin-bottom:14px;padding:12px;background:#f8fafc;border:1px solid var(--line);border-radius:8px">
+          <label style="display:block;margin-bottom:6px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--ink-soft)" data-i18n="raffleBuyerLabel">Buyer</label>
+          <div style="display:flex;gap:16px;align-items:center;font-size:13px;margin-bottom:8px">
+            <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;margin:0;text-transform:none;letter-spacing:0;font-size:13px"><input type="radio" name="raffle-buyer-type" value="member" checked style="width:auto;margin:0"> <span data-i18n="raffleBuyerMember">AICO Member</span></label>
+            <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;margin:0;text-transform:none;letter-spacing:0;font-size:13px"><input type="radio" name="raffle-buyer-type" value="contact" style="width:auto;margin:0"> <span data-i18n="raffleBuyerNonMember">Non-member</span></label>
           </div>
+          <div id="raffle-buyer-member-row">
+            <input list="raffle-buyer-member-list" id="raffle-buyer-member-select" data-i18n-placeholder="raffleBuyerMemberPh" placeholder="Type to search members…" style="width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:6px;background:#fff" />
+            <datalist id="raffle-buyer-member-list"></datalist>
+            <div id="raffle-buyer-member-status" style="font-size:11px;color:var(--ink-soft);margin-top:4px"></div>
+          </div>
+          <div id="raffle-buyer-contact-row" style="display:none">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <input type="text" id="raffle-buyer-first-name" data-i18n-placeholder="firstNamePh" placeholder="First name" style="padding:9px 11px;border:1px solid var(--line);border-radius:6px">
+              <input type="text" id="raffle-buyer-last-name" data-i18n-placeholder="lastNamePh" placeholder="Last name" style="padding:9px 11px;border:1px solid var(--line);border-radius:6px">
+            </div>
+          </div>
+          <input type="hidden" id="raffle-buyer-name">
+        </div>
+
+        <div class="grid-2">
           <div>
             <label for="raffle-buyer-phone" data-i18n="rafflePhone">Phone</label>
             <input type="tel" id="raffle-buyer-phone" required />
           </div>
-        </div>
-
-        <div style="margin-top:14px;">
-          <label for="raffle-buyer-email" data-i18n="raffleEmail">Email (optional)</label>
-          <input type="email" id="raffle-buyer-email" data-i18n-placeholder="raffleEmailPh" placeholder="To send their numbers" />
+          <div>
+            <label for="raffle-buyer-email" data-i18n="raffleEmail">Email (optional)</label>
+            <input type="email" id="raffle-buyer-email" data-i18n-placeholder="raffleEmailPh" placeholder="To send their numbers" />
+          </div>
         </div>
 
         <div class="grid-2" style="margin-top:14px;">
@@ -2165,6 +2180,12 @@ const I18N = {
     raffleSaleTitle: 'Sell Raffle Tickets',
     raffleLabel: 'Raffle',
     raffleBuyerName: 'Buyer name',
+    raffleBuyerLabel: 'Buyer',
+    raffleBuyerMember: 'AICO Member',
+    raffleBuyerNonMember: 'Non-member',
+    raffleBuyerMemberPh: 'Type to search members…',
+    firstNamePh: 'First name',
+    lastNamePh: 'Last name',
     rafflePhone: 'Phone',
     raffleEmail: 'Email (optional)',
     raffleEmailPh: 'To send their numbers',
@@ -2451,6 +2472,12 @@ const I18N = {
     raffleSaleTitle: 'Vendre des billets de tombola',
     raffleLabel: 'Tombola',
     raffleBuyerName: 'Nom de l’acheteur',
+    raffleBuyerLabel: 'Acheteur',
+    raffleBuyerMember: 'Membre AICO',
+    raffleBuyerNonMember: 'Non-membre',
+    raffleBuyerMemberPh: 'Tapez pour rechercher un membre…',
+    firstNamePh: 'Prénom',
+    lastNamePh: 'Nom de famille',
     rafflePhone: 'Téléphone',
     raffleEmail: 'Courriel (facultatif)',
     raffleEmailPh: 'Pour envoyer ses numéros',
@@ -4112,6 +4139,13 @@ function resetRaffleForm() {
   $('raffle-payment-other').style.display = 'none';
   $('raffle-payment-other').value = '';
   $('raffle-payment-other').required = false;
+  // Reset the buyer picker visual state (member row visible by default)
+  const mRow = document.getElementById('raffle-buyer-member-row');
+  const cRow = document.getElementById('raffle-buyer-contact-row');
+  if (mRow) mRow.style.display = '';
+  if (cRow) cRow.style.display = 'none';
+  const hidden = document.getElementById('raffle-buyer-name');
+  if (hidden) hidden.value = '';
   updateRaffleParseAndTotals();
 }
 
@@ -5001,6 +5035,73 @@ function refreshBuyerMemberList(){
       ? `${portalMembers.length} members loaded from Portal.`
       : 'Portal not connected — admin can configure via ⚙ Portal in the header.';
   }
+  // Mirror the list into the Raffle picker too
+  refreshRaffleBuyerMemberList();
+}
+
+function refreshRaffleBuyerMemberList(){
+  const dl = $$('raffle-buyer-member-list'); if(!dl) return;
+  dl.innerHTML = portalMembers.map(m=>`<option data-id="${m.id}" value="${(m.last_name||'')+', '+(m.first_name||'')}"></option>`).join('');
+  const status = $$('raffle-buyer-member-status');
+  if(status){
+    status.textContent = sbAuthed
+      ? `${portalMembers.length} members loaded from Portal.`
+      : 'Portal not connected — admin can configure via ⚙ Portal in the header.';
+  }
+}
+
+function setupRaffleBuyerPicker(){
+  const radios = document.querySelectorAll('input[name="raffle-buyer-type"]');
+  const mRow = $$('raffle-buyer-member-row');
+  const cRow = $$('raffle-buyer-contact-row');
+  const memberSel = $$('raffle-buyer-member-select');
+  const phoneField = $$('raffle-buyer-phone');
+  const emailField = $$('raffle-buyer-email');
+
+  function autoFillFromMember(){
+    if(!memberSel) return;
+    const typed = (memberSel.value||'').trim();
+    const match = portalMembers.find(m => `${m.last_name||''}, ${m.first_name||''}` === typed);
+    if(match){
+      if(emailField) emailField.value = match.email || '';
+      if(phoneField) phoneField.value = match.phone || '';
+    }
+  }
+
+  function sync(){
+    const v = document.querySelector('input[name="raffle-buyer-type"]:checked')?.value || 'member';
+    if(mRow) mRow.style.display = v==='member' ? '' : 'none';
+    if(cRow) cRow.style.display = v==='contact' ? '' : 'none';
+    if(v === 'contact'){
+      if(emailField) emailField.value = '';
+      if(phoneField) phoneField.value = '';
+    } else {
+      autoFillFromMember();
+    }
+    syncRaffleBuyerName();
+  }
+
+  radios.forEach(r=>r.addEventListener('change', sync));
+  ['raffle-buyer-member-select','raffle-buyer-first-name','raffle-buyer-last-name'].forEach(id=>{
+    const el = $$(id); if(el) el.addEventListener('input', syncRaffleBuyerName);
+  });
+  if(memberSel){
+    memberSel.addEventListener('change', autoFillFromMember);
+    memberSel.addEventListener('input', autoFillFromMember);
+  }
+  sync();
+}
+
+function syncRaffleBuyerName(){
+  const v = document.querySelector('input[name="raffle-buyer-type"]:checked')?.value || 'member';
+  const hidden = $$('raffle-buyer-name'); if(!hidden) return;
+  if(v==='member'){
+    hidden.value = ($$('raffle-buyer-member-select')?.value||'').trim();
+  } else {
+    const fn = ($$('raffle-buyer-first-name')?.value||'').trim();
+    const ln = ($$('raffle-buyer-last-name')?.value||'').trim();
+    hidden.value = (fn+' '+ln).trim();
+  }
 }
 
 function setupBuyerPicker(){
@@ -5219,7 +5320,9 @@ function refreshPortalUiVisibility(){
 
 document.addEventListener('DOMContentLoaded', () => {
   setupBuyerPicker();
+  setupRaffleBuyerPicker();
   refreshBuyerMemberList();
+  refreshRaffleBuyerMemberList();
   const settingsBtn = $$('portal-settings-btn');
   if(settingsBtn) settingsBtn.addEventListener('click', openPortalModal);
   const pmCancel = $$('pm-cancel'); if(pmCancel) pmCancel.addEventListener('click', closePortalModal);
