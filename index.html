@@ -1995,7 +1995,7 @@
 <div class="modal-backdrop" id="portal-modal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:999;align-items:center;justify-content:center;padding:20px;">
   <div class="modal" style="background:#fff;border-radius:14px;width:100%;max-width:560px;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.25);max-height:90vh;overflow:auto;color:#1f2937">
     <h2 style="margin:0 0 8px;color:#0d4a6b">Membership Portal Sync Settings</h2>
-    <p style="font-size:13px;color:#64748b;margin:0 0 18px">Configure the connection so ticket sales can be pushed to the AICO Membership Portal as gala payments. Settings are stored on this device only.</p>
+    <p style="font-size:13px;color:#64748b;margin:0 0 18px">Configure the connection so ticket sales can be pushed to the AICO Membership Portal as gala payments. Settings are synced across all devices — enter them once and every seller's app picks them up automatically.</p>
     <div style="margin-bottom:14px">
       <label style="display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:#64748b;margin-bottom:4px">Supabase Project URL</label>
       <input type="text" id="pm-url" placeholder="https://xxxxxxxx.supabase.co" style="width:100%;padding:9px 11px;border:1px solid #e5e7eb;border-radius:6px;box-sizing:border-box">
@@ -5134,10 +5134,19 @@ async function portalSaveSettings(){
     password: $$('pm-password').value,
     galaEventId, galaEventName
   };
-  localStorage.setItem(PORTAL_LS_KEY, JSON.stringify(portalCfg));
+  // Save to Firestore so every device picks it up automatically
+  try {
+    await setDoc(doc(db, 'config', 'portal'), portalCfg, { merge: true });
+  } catch(e) {
+    $$('pm-status').textContent = 'Could not save to cloud: ' + e.message;
+    $$('pm-status').style.color = '#b91c1c';
+    return;
+  }
+  // Also cache locally so the next page load on this device has it instantly
+  try { localStorage.setItem(PORTAL_LS_KEY, JSON.stringify(portalCfg)); } catch(e){}
   closePortalModal();
   await initPortalSupabase();
-  showToast('Portal settings saved.');
+  showToast('Portal settings saved — synced to all devices.');
 }
 
 /* Sync to Portal — admin only */
@@ -5223,6 +5232,27 @@ document.addEventListener('DOMContentLoaded', () => {
 setInterval(()=>{ try{ refreshPortalUiVisibility(); }catch(e){} }, 1500);
 
 const { updateDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+
+/* Live-sync portal settings from Firestore so every device picks them up
+   automatically without having to re-enter the credentials. */
+try {
+  onSnapshot(doc(db, 'config', 'portal'), (snap) => {
+    if (!snap.exists()) return;
+    const data = snap.data() || {};
+    // Update local config from the cloud
+    portalCfg = { ...data };
+    // Cache locally too so the next page load has it instantly
+    try { localStorage.setItem(PORTAL_LS_KEY, JSON.stringify(portalCfg)); } catch(e) {}
+    // If we have full credentials and aren't connected yet, connect now.
+    if (portalCfg.url && portalCfg.anonKey && portalCfg.email && portalCfg.password && !sbAuthed) {
+      initPortalSupabase();
+    }
+  }, (err) => {
+    console.warn('Portal config listener failed:', err);
+  });
+} catch (e) {
+  console.warn('Could not set up portal config listener:', e);
+}
 </script>
 </body>
 </html>
