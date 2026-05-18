@@ -5134,7 +5134,7 @@ async function portalSaveSettings(){
     password: $$('pm-password').value,
     galaEventId, galaEventName
   };
-  // Save to Firestore so every device picks it up automatically
+  // Save full config to Firestore so every device picks it up automatically
   try {
     await setDoc(doc(db, 'config', 'portal'), portalCfg, { merge: true });
   } catch(e) {
@@ -5142,7 +5142,7 @@ async function portalSaveSettings(){
     $$('pm-status').style.color = '#b91c1c';
     return;
   }
-  // Also cache locally so the next page load on this device has it instantly
+  // Also cache locally for instant page-load
   try { localStorage.setItem(PORTAL_LS_KEY, JSON.stringify(portalCfg)); } catch(e){}
   closePortalModal();
   await initPortalSupabase();
@@ -5239,11 +5239,10 @@ try {
   onSnapshot(doc(db, 'config', 'portal'), (snap) => {
     if (!snap.exists()) return;
     const data = snap.data() || {};
-    // Update local config from the cloud
     portalCfg = { ...data };
-    // Cache locally too so the next page load has it instantly
+    // Cache locally so the next page load has it instantly
     try { localStorage.setItem(PORTAL_LS_KEY, JSON.stringify(portalCfg)); } catch(e) {}
-    // If we have full credentials and aren't connected yet, connect now.
+    // Auto-connect if we have full credentials
     if (portalCfg.url && portalCfg.anonKey && portalCfg.email && portalCfg.password && !sbAuthed) {
       initPortalSupabase();
     }
