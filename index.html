@@ -1395,7 +1395,7 @@
       <button class="tab active" id="tab-sales" data-view="sales" data-i18n="tabSales">Sales Entry</button>
       <button class="tab" id="tab-raffle" data-view="raffle" style="display:none;" data-i18n="tabRaffle">🎟 Raffle</button>
       <button class="tab" id="tab-dashboard" data-view="dashboard" data-i18n="tabDashboard">Dashboard</button>
-      <button class="tab" id="tab-scanner" title="Opens the scanner in a new tab" data-i18n="tabScannerNav">📷 Scanner</button>
+      <button class="tab" id="tab-scanner" title="Open the scanner" data-i18n="tabScannerNav">📷 Scanner</button>
     </div>
     <div class="lang-switch" role="tablist">
       <button class="lang-btn active" data-lang="en">EN</button>
@@ -3445,7 +3445,7 @@ $('export-csv').addEventListener('click', () => {
 document.querySelectorAll('.tab').forEach(b => {
   b.addEventListener('click', () => {
     if (b.id === 'tab-scanner') {
-      window.open(scannerPageUrl(), '_blank', 'noopener');
+      window.location.assign(scannerPageUrl());
       return;
     }
     if (b.dataset.view) setView(b.dataset.view);
