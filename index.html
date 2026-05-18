@@ -1703,6 +1703,124 @@
       </div>
     </div>
 
+    <div class="card">
+      <h2 data-i18n="salesLog">Sales Log</h2>
+      <div class="toolbar">
+        <input type="text" id="search" data-i18n-placeholder="searchPlaceholder" placeholder="Search by buyer, seller, or sale ID..." />
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn-secondary" id="export-csv" data-i18n="exportCsv">Export CSV</button>
+          <button type="button" class="btn-danger" id="clear-all" data-i18n="clearAll">Clear all data</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table id="log-table">
+          <thead>
+            <tr>
+              <th data-i18n="thSaleId">Sale ID</th>
+              <th data-i18n="thDate">Date</th>
+              <th data-i18n="thBuyer">Buyer</th>
+              <th data-i18n="thSeller">Seller</th>
+              <th data-i18n="thPayment">Payment</th>
+              <th data-i18n="assignTableLabel">Table</th>
+              <th data-i18n="thCategory">Category</th>
+              <th class="num" data-i18n="thQty">Qty</th>
+              <th class="num" data-i18n="thUnit">Unit</th>
+              <th class="num" data-i18n="thSubtotal">Subtotal</th>
+              <th class="num" data-i18n="thSaleTotal">Sale Total</th>
+              <th class="num" data-i18n="thReceived">Received</th>
+              <th class="num" data-i18n="thBalance">Balance</th>
+              <th data-i18n="thNotes">Notes</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="log-body"></tbody>
+        </table>
+        <div id="empty-state" class="empty" data-i18n="emptyState">No sales recorded yet.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 data-i18n="raffleSalesTitle">Raffle Sales</h2>
+
+      <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 16px;">
+        <div class="kpi">
+          <div class="label" data-i18n="raffleKpiSold">Tickets Sold</div>
+          <div class="value" id="raffle-kpi-sold">0</div>
+        </div>
+        <div class="kpi">
+          <div class="label" data-i18n="raffleKpiRevenue">Raffle Revenue</div>
+          <div class="value" id="raffle-kpi-revenue">$0</div>
+        </div>
+        <div class="kpi">
+          <div class="label" data-i18n="raffleKpiBuyers">Unique Buyers</div>
+          <div class="value" id="raffle-kpi-buyers">0</div>
+        </div>
+      </div>
+
+      <h3 style="margin: 12px 0 8px 0; font-size: 14px; text-transform: uppercase; letter-spacing: .8px; color: var(--ink-soft);" data-i18n="raffleLookupTitle">Look up by ticket number (for the draw)</h3>
+      <p style="margin: 0 0 10px 0; font-size: 12px; color: var(--ink-soft);" data-i18n="raffleLookupHelp">
+        When you pull a number from the bowl, type it here to find the buyer.
+      </p>
+      <div class="raffle-lookup-row">
+        <input type="text" id="raffle-lookup-input" data-i18n-placeholder="raffleLookupPh" placeholder="e.g. 20096-001" />
+        <button type="button" class="btn-primary" id="raffle-lookup-btn" data-i18n="raffleLookupBtn">Search</button>
+      </div>
+      <div id="raffle-lookup-result"></div>
+
+      <h3 style="margin: 22px 0 8px 0; font-size: 14px; text-transform: uppercase; letter-spacing: .8px; color: var(--ink-soft);" data-i18n="raffleSalesLogTitle">All Raffle Sales</h3>
+      <div class="toolbar">
+        <input type="text" id="raffle-search" data-i18n-placeholder="raffleSearchPh" placeholder="Search by buyer name or ticket number..." />
+        <button type="button" class="btn-secondary" id="raffle-export-csv" data-i18n="exportCsv">Export CSV</button>
+      </div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th data-i18n="thDate">Date</th>
+              <th data-i18n="raffleBuyerName">Buyer name</th>
+              <th data-i18n="rafflePhone">Phone</th>
+              <th data-i18n="raffleTicketsCol">Tickets</th>
+              <th class="num" data-i18n="thQty">Qty</th>
+              <th class="num" data-i18n="thSaleTotal">Total</th>
+              <th data-i18n="thPayment">Payment</th>
+              <th data-i18n="thSeller">Seller</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="raffle-log-body"></tbody>
+        </table>
+        <div id="raffle-log-empty" class="empty" data-i18n="raffleEmpty">No raffle sales yet.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 data-i18n="compsTitle">Complimentary Tickets (VIPs &amp; Guests)</h2>
+      <p style="margin: -6px 0 14px 0; font-size: 12px; color: var(--ink-soft);" data-i18n="compsHelp">
+        Free tickets for VIPs, sponsors, board members, etc. They don't affect sales totals but still get QR codes and can be assigned to tables.
+      </p>
+      <div id="comps-list"></div>
+      <div id="comps-empty" class="empty" data-i18n="compsEmpty" style="display:none;">No complimentary tickets yet.</div>
+      <div class="comp-add">
+        <div>
+          <label for="new-comp-name" data-i18n="compName">Guest name</label>
+          <input type="text" id="new-comp-name" data-i18n-placeholder="compNamePh" placeholder="e.g. John Sponsor" />
+        </div>
+        <div>
+          <label for="new-comp-email" data-i18n="compEmail">Email (optional)</label>
+          <input type="email" id="new-comp-email" data-i18n-placeholder="compEmailPh" placeholder="To send their ticket" />
+        </div>
+        <div>
+          <label for="new-comp-guests" data-i18n="compGuests">Guests</label>
+          <input type="number" id="new-comp-guests" min="1" value="1" />
+        </div>
+        <div>
+          <label for="new-comp-notes" data-i18n="compNotes">Notes</label>
+          <input type="text" id="new-comp-notes" data-i18n-placeholder="compNotesPh" placeholder="e.g. Platinum sponsor" />
+        </div>
+        <button type="button" class="btn-primary" id="add-comp-btn" data-i18n="addComp">+ Add comp</button>
+      </div>
+    </div>
+
     <div class="card config-locked" id="config-card">
       <div class="config-header">
         <h2 data-i18n="eventConfigTitle">Event & Ticket Settings</h2>
@@ -1812,88 +1930,6 @@
     </div>
 
     <div class="card">
-      <h2 data-i18n="raffleSalesTitle">Raffle Sales</h2>
-
-      <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 16px;">
-        <div class="kpi">
-          <div class="label" data-i18n="raffleKpiSold">Tickets Sold</div>
-          <div class="value" id="raffle-kpi-sold">0</div>
-        </div>
-        <div class="kpi">
-          <div class="label" data-i18n="raffleKpiRevenue">Raffle Revenue</div>
-          <div class="value" id="raffle-kpi-revenue">$0</div>
-        </div>
-        <div class="kpi">
-          <div class="label" data-i18n="raffleKpiBuyers">Unique Buyers</div>
-          <div class="value" id="raffle-kpi-buyers">0</div>
-        </div>
-      </div>
-
-      <h3 style="margin: 12px 0 8px 0; font-size: 14px; text-transform: uppercase; letter-spacing: .8px; color: var(--ink-soft);" data-i18n="raffleLookupTitle">Look up by ticket number (for the draw)</h3>
-      <p style="margin: 0 0 10px 0; font-size: 12px; color: var(--ink-soft);" data-i18n="raffleLookupHelp">
-        When you pull a number from the bowl, type it here to find the buyer.
-      </p>
-      <div class="raffle-lookup-row">
-        <input type="text" id="raffle-lookup-input" data-i18n-placeholder="raffleLookupPh" placeholder="e.g. 20096-001" />
-        <button type="button" class="btn-primary" id="raffle-lookup-btn" data-i18n="raffleLookupBtn">Search</button>
-      </div>
-      <div id="raffle-lookup-result"></div>
-
-      <h3 style="margin: 22px 0 8px 0; font-size: 14px; text-transform: uppercase; letter-spacing: .8px; color: var(--ink-soft);" data-i18n="raffleSalesLogTitle">All Raffle Sales</h3>
-      <div class="toolbar">
-        <input type="text" id="raffle-search" data-i18n-placeholder="raffleSearchPh" placeholder="Search by buyer name or ticket number..." />
-        <button type="button" class="btn-secondary" id="raffle-export-csv" data-i18n="exportCsv">Export CSV</button>
-      </div>
-      <div style="overflow-x:auto;">
-        <table>
-          <thead>
-            <tr>
-              <th data-i18n="thDate">Date</th>
-              <th data-i18n="raffleBuyerName">Buyer name</th>
-              <th data-i18n="rafflePhone">Phone</th>
-              <th data-i18n="raffleTicketsCol">Tickets</th>
-              <th class="num" data-i18n="thQty">Qty</th>
-              <th class="num" data-i18n="thSaleTotal">Total</th>
-              <th data-i18n="thPayment">Payment</th>
-              <th data-i18n="thSeller">Seller</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="raffle-log-body"></tbody>
-        </table>
-        <div id="raffle-log-empty" class="empty" data-i18n="raffleEmpty">No raffle sales yet.</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2 data-i18n="compsTitle">Complimentary Tickets (VIPs &amp; Guests)</h2>
-      <p style="margin: -6px 0 14px 0; font-size: 12px; color: var(--ink-soft);" data-i18n="compsHelp">
-        Free tickets for VIPs, sponsors, board members, etc. They don't affect sales totals but still get QR codes and can be assigned to tables.
-      </p>
-      <div id="comps-list"></div>
-      <div id="comps-empty" class="empty" data-i18n="compsEmpty" style="display:none;">No complimentary tickets yet.</div>
-      <div class="comp-add">
-        <div>
-          <label for="new-comp-name" data-i18n="compName">Guest name</label>
-          <input type="text" id="new-comp-name" data-i18n-placeholder="compNamePh" placeholder="e.g. John Sponsor" />
-        </div>
-        <div>
-          <label for="new-comp-email" data-i18n="compEmail">Email (optional)</label>
-          <input type="email" id="new-comp-email" data-i18n-placeholder="compEmailPh" placeholder="To send their ticket" />
-        </div>
-        <div>
-          <label for="new-comp-guests" data-i18n="compGuests">Guests</label>
-          <input type="number" id="new-comp-guests" min="1" value="1" />
-        </div>
-        <div>
-          <label for="new-comp-notes" data-i18n="compNotes">Notes</label>
-          <input type="text" id="new-comp-notes" data-i18n-placeholder="compNotesPh" placeholder="e.g. Platinum sponsor" />
-        </div>
-        <button type="button" class="btn-primary" id="add-comp-btn" data-i18n="addComp">+ Add comp</button>
-      </div>
-    </div>
-
-    <div class="card">
       <h2 data-i18n="tablesSetupTitle">Tables Setup</h2>
       <p style="margin: -6px 0 14px 0; font-size: 12px; color: var(--ink-soft);" data-i18n="tablesSetupHelp">
         Define each table and its seat capacity. Add tables as you figure out the layout.
@@ -1938,42 +1974,6 @@
       </div>
       <div id="assignments-list"></div>
       <div id="assignments-empty" class="empty" data-i18n="assignEmpty" style="display:none;">No sales to assign yet.</div>
-    </div>
-
-    <div class="card">
-      <h2 data-i18n="salesLog">Sales Log</h2>
-      <div class="toolbar">
-        <input type="text" id="search" data-i18n-placeholder="searchPlaceholder" placeholder="Search by buyer, seller, or sale ID..." />
-        <div style="display:flex; gap:8px;">
-          <button type="button" class="btn-secondary" id="export-csv" data-i18n="exportCsv">Export CSV</button>
-          <button type="button" class="btn-danger" id="clear-all" data-i18n="clearAll">Clear all data</button>
-        </div>
-      </div>
-      <div style="overflow-x:auto;">
-        <table id="log-table">
-          <thead>
-            <tr>
-              <th data-i18n="thSaleId">Sale ID</th>
-              <th data-i18n="thDate">Date</th>
-              <th data-i18n="thBuyer">Buyer</th>
-              <th data-i18n="thSeller">Seller</th>
-              <th data-i18n="thPayment">Payment</th>
-              <th data-i18n="assignTableLabel">Table</th>
-              <th data-i18n="thCategory">Category</th>
-              <th class="num" data-i18n="thQty">Qty</th>
-              <th class="num" data-i18n="thUnit">Unit</th>
-              <th class="num" data-i18n="thSubtotal">Subtotal</th>
-              <th class="num" data-i18n="thSaleTotal">Sale Total</th>
-              <th class="num" data-i18n="thReceived">Received</th>
-              <th class="num" data-i18n="thBalance">Balance</th>
-              <th data-i18n="thNotes">Notes</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="log-body"></tbody>
-        </table>
-        <div id="empty-state" class="empty" data-i18n="emptyState">No sales recorded yet.</div>
-      </div>
     </div>
 
   </section>
