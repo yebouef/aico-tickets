@@ -428,7 +428,7 @@
 
   .seller-row {
     display: grid;
-    grid-template-columns: 1.3fr 1fr auto;
+    grid-template-columns: 1.1fr 0.9fr 1.5fr auto;
     gap: 10px;
     align-items: center;
     padding: 12px 14px;
@@ -443,14 +443,34 @@
     font-size: 13px;
     color: var(--ink-soft);
   }
+  .seller-row .range-cell {
+    display: flex; gap: 4px; align-items: center;
+  }
+  .seller-row .range-cell input {
+    flex: 1; min-width: 0;
+    padding: 6px 8px;
+    font-size: 12px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+  }
+  .seller-row .range-cell .sep { color: var(--ink-soft); font-size: 12px; }
   .seller-add {
     display: grid;
-    grid-template-columns: 1.3fr 1fr auto;
+    grid-template-columns: 1.1fr 0.9fr 1.5fr auto;
     gap: 10px;
     align-items: end;
     margin-top: 12px;
     padding-top: 12px;
     border-top: 1px dashed var(--line);
+  }
+  .seller-add .range-input-wrap {
+    display: flex; gap: 4px; align-items: center;
+  }
+  .seller-add .range-input-wrap input {
+    flex: 1; min-width: 0;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 13px;
   }
 
   .toolbar {
@@ -1892,6 +1912,14 @@
           <label for="new-seller-password" data-i18n="newSellerPassword">Password</label>
           <input type="text" id="new-seller-password" />
         </div>
+        <div>
+          <label data-i18n="raffleRangeLabel">Raffle range (optional)</label>
+          <div class="range-input-wrap">
+            <input type="text" id="new-seller-range-start" data-i18n-placeholder="raffleRangeStartPh" placeholder="e.g. 20096-001" />
+            <span class="sep">→</span>
+            <input type="text" id="new-seller-range-end" data-i18n-placeholder="raffleRangeEndPh" placeholder="e.g. 20096-125" />
+          </div>
+        </div>
         <button type="button" class="btn-primary" id="add-seller-btn" data-i18n="addSeller">+ Add seller</button>
       </div>
     </div>
@@ -2266,6 +2294,9 @@ const I18N = {
     toastTableRemoved: 'Table removed.',
     toastTableAdded: 'Table added.',
     sellersTitle: 'Sellers',
+    raffleRangeLabel: 'Raffle ticket range (optional)',
+    raffleRangeStartPh: 'e.g. 20096-001',
+    raffleRangeEndPh: 'e.g. 20096-125',
     sellersEmpty: 'No sellers yet. Add one below.',
     newSellerName: 'Seller name',
     newSellerPassword: 'Password',
@@ -2558,6 +2589,9 @@ const I18N = {
     toastTableRemoved: 'Table retirée.',
     toastTableAdded: 'Table ajoutée.',
     sellersTitle: 'Vendeurs',
+    raffleRangeLabel: 'Plage de billets de tombola (facultatif)',
+    raffleRangeStartPh: 'ex. 20096-001',
+    raffleRangeEndPh: 'ex. 20096-125',
     sellersEmpty: 'Aucun vendeur. Ajoutez-en un ci-dessous.',
     newSellerName: 'Nom du vendeur',
     newSellerPassword: 'Mot de passe',
@@ -2911,6 +2945,14 @@ function setView(v) {
   document.querySelectorAll('.tab').forEach(b => {
     b.classList.toggle('active', b.dataset.view === v);
   });
+  // When switching to the Raffle tab, pre-fill the starting ticket number if blank
+  if (v === 'raffle' && currentUser && currentUser.role === 'seller') {
+    const startInput = document.getElementById('raffle-start-number');
+    if (startInput && !startInput.value.trim()) {
+      const next = nextRaffleNumberFor(currentUser.name);
+      if (next) { startInput.value = next; if (typeof updateRaffleParseAndTotals === 'function') updateRaffleParseAndTotals(); }
+    }
+  }
 }
 
 function showPwModal() {
@@ -2948,6 +2990,11 @@ function renderSellersList() {
     row.innerHTML = `
       <div class="name">${escapeHtml(s.name)}</div>
       <div class="pwd">${escapeHtml(s.password)}</div>
+      <div class="range-cell">
+        <input type="text" data-rng-start="${escapeHtml(s._docId)}" value="${escapeHtml(s.raffleRangeStart || '')}" placeholder="${escapeHtml(t('raffleRangeStartPh'))}" />
+        <span class="sep">→</span>
+        <input type="text" data-rng-end="${escapeHtml(s._docId)}" value="${escapeHtml(s.raffleRangeEnd || '')}" placeholder="${escapeHtml(t('raffleRangeEndPh'))}" />
+      </div>
       <button type="button" class="btn-danger" data-rm="${escapeHtml(s._docId)}">${escapeHtml(t('removeSeller'))}</button>
     `;
     row.querySelector('[data-rm]').addEventListener('click', async () => {
@@ -2960,22 +3007,40 @@ function renderSellersList() {
         showToast(t('toastError') + e.message, true);
       }
     });
+    // Auto-save the range fields on blur
+    const startInput = row.querySelector('[data-rng-start]');
+    const endInput = row.querySelector('[data-rng-end]');
+    startInput.addEventListener('blur', () => updateSellerRangeField(s._docId, 'raffleRangeStart', startInput.value.trim(), s.raffleRangeStart || ''));
+    endInput.addEventListener('blur',   () => updateSellerRangeField(s._docId, 'raffleRangeEnd',   endInput.value.trim(),   s.raffleRangeEnd   || ''));
     wrap.appendChild(row);
   });
+}
+
+async function updateSellerRangeField(docId, field, value, previous) {
+  if (value === previous) return;
+  try {
+    await setDoc(doc(db, 'sellers', docId), { [field]: value }, { merge: true });
+  } catch (e) {
+    showToast(t('toastError') + e.message, true);
+  }
 }
 
 async function addSeller() {
   const name = $('new-seller-name').value.trim();
   const password = $('new-seller-password').value.trim();
+  const raffleRangeStart = $('new-seller-range-start').value.trim();
+  const raffleRangeEnd = $('new-seller-range-end').value.trim();
   if (!name || !password) { alert(t('alertSellerInvalid')); return; }
   if (name.toLowerCase() === 'admin' || name === '__admin__') { alert(t('alertSellerReserved')); return; }
   if (sellers.some(s => s.name.toLowerCase() === name.toLowerCase())) {
     alert(t('alertSellerExists')); return;
   }
   try {
-    await addDoc(collection(db, 'sellers'), { name, password });
+    await addDoc(collection(db, 'sellers'), { name, password, raffleRangeStart, raffleRangeEnd });
     $('new-seller-name').value = '';
     $('new-seller-password').value = '';
+    $('new-seller-range-start').value = '';
+    $('new-seller-range-end').value = '';
     showToast(t('toastSellerAdded'));
   } catch (e) {
     showToast(t('toastError') + e.message, true);
@@ -4139,7 +4204,113 @@ function resetRaffleForm() {
   if (cRow) cRow.style.display = 'none';
   const hidden = document.getElementById('raffle-buyer-name');
   if (hidden) hidden.value = '';
+  // Pre-fill the starting ticket number with the next one in this seller's range
+  if (currentUser && currentUser.role === 'seller') {
+    const next = nextRaffleNumberFor(currentUser.name);
+    if (next) $('raffle-start-number').value = next;
+  }
   updateRaffleParseAndTotals();
+}
+
+function buildRaffleEmailParams(sale, recipient) {
+  const numbersList = (sale.ticketNumbers || []).join(', ');
+  return {
+    to_email: recipient,
+    buyer_name: sale.buyer || '',
+    buyer_email: sale.buyerEmail || '',
+    sale_id: sale.saleId,
+    event_name: appConfig.raffleName || 'AICO Raffle',
+    event_date: appConfig.eventDate || '',
+    event_location: appConfig.eventLocation || '',
+    contact_email: appConfig.contactEmail || '',
+    ticket_url: '',  // physical raffle tickets — no online ticket page
+    total: '$' + (Number(sale.total) || 0).toFixed(2),
+    received: '$' + (Number(sale.received) || 0).toFixed(2),
+    balance: '$' + (Number(sale.balance) || 0).toFixed(2),
+    payment: localizePayment(sale.payment, sale.paymentOther),
+    tickets_summary: `${sale.quantity || (sale.ticketNumbers||[]).length} raffle ticket(s): ${numbersList}`,
+    seller: sale.seller,
+    sale_date: formatDate(sale.date),
+    table_name: '',
+  };
+}
+
+async function sendOneRaffleEmail(recipient, sale) {
+  if (!emailjsConfigured() || !recipient) return { sent: false };
+  tryInitEmailjs();
+  try {
+    await emailjs.send(
+      appConfig.emailjsServiceId,
+      appConfig.emailjsTemplateId,
+      buildRaffleEmailParams(sale, recipient)
+    );
+    return { sent: true };
+  } catch (e) {
+    console.warn('Raffle email failed for', recipient, e);
+    return { sent: false, error: e };
+  }
+}
+
+async function sendAllRaffleEmails(sale) {
+  const results = { buyer: null, archive: null };
+  const tasks = [];
+  if (sale.buyerEmail) {
+    tasks.push(sendOneRaffleEmail(sale.buyerEmail, sale).then(r => results.buyer = r));
+  }
+  if (appConfig.archiveEmail) {
+    tasks.push(sendOneRaffleEmail(appConfig.archiveEmail, sale).then(r => results.archive = r));
+  }
+  await Promise.all(tasks);
+  return results;
+}
+
+// Compute the next ticket number to suggest for this seller, based on:
+//  - their assigned raffleRangeStart/raffleRangeEnd (if set on the seller record)
+//  - the highest already-sold number within that range
+// If no range is set, returns the highest sold + 1 globally.
+function nextRaffleNumberFor(sellerName) {
+  const seller = (sellers || []).find(s => s.name === sellerName);
+  const rangeStart = (seller && seller.raffleRangeStart || '').trim();
+  const rangeEnd = (seller && seller.raffleRangeEnd || '').trim();
+
+  const trailingNum = (s) => {
+    const m = String(s).match(/(\d+)$/);
+    return m ? parseInt(m[1], 10) : null;
+  };
+  const trailingPadLen = (s) => {
+    const m = String(s).match(/(\d+)$/);
+    return m ? m[1].length : 0;
+  };
+  const prefixOf = (s) => {
+    const m = String(s).match(/^(.*?)(\d+)$/);
+    return m ? m[1] : '';
+  };
+
+  const startNum = rangeStart ? trailingNum(rangeStart) : null;
+  const endNum   = rangeEnd   ? trailingNum(rangeEnd)   : null;
+
+  let highest = null;
+  let highestNum = -Infinity;
+  for (const sale of (raffleSales || [])) {
+    for (const n of (sale.ticketNumbers || [])) {
+      const num = trailingNum(n);
+      if (num === null) continue;
+      if (startNum !== null && num < startNum) continue;
+      if (endNum   !== null && num > endNum)   continue;
+      if (num > highestNum) { highestNum = num; highest = n; }
+    }
+  }
+
+  if (highest !== null) {
+    const pad = trailingPadLen(highest);
+    const prefix = prefixOf(highest);
+    const next = highestNum + 1;
+    if (endNum !== null && next > endNum) return '';  // range exhausted
+    return prefix + String(next).padStart(pad, '0');
+  }
+
+  // No sales yet in this seller's range — start at the range start
+  return rangeStart || '';
 }
 
 async function submitRaffleSale(e) {
@@ -4198,6 +4369,21 @@ async function submitRaffleSale(e) {
     });
     resetRaffleForm();
     showToast(t('toastRaffleSold'));
+    // Send email confirmations: to buyer (if email provided) and archive (if configured)
+    sendAllRaffleEmails(sale).then(results => {
+      const parts = [];
+      if (results.buyer) {
+        parts.push(results.buyer.sent
+          ? `✓ sent to ${sale.buyerEmail}`
+          : `⚠ could not email ${sale.buyerEmail}`);
+      }
+      if (results.archive) {
+        parts.push(results.archive.sent
+          ? `✓ archive copy sent`
+          : `⚠ archive copy failed`);
+      }
+      if (parts.length) showToast(parts.join(' · '));
+    });
   } catch (err) {
     showToast(t('toastError') + err.message, true);
   } finally {
