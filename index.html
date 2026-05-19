@@ -5415,15 +5415,22 @@ async function portalTestConnect(){
 async function portalSaveSettings(){
   const eventSel = $$('pm-event');
   const galaEventId = eventSel.value;
-  const galaEventName = eventSel.options[eventSel.selectedIndex]?.text || '';
-  if(!galaEventId){
-    $$('pm-status').textContent='Pick a Gala event before saving. Click Connect first if the dropdown is empty.';
+  const galaEventName = galaEventId ? (eventSel.options[eventSel.selectedIndex]?.text || '') : '';
+  const url = sanitizeUrl($$('pm-url').value.trim());
+  const serviceRoleKey = $$('pm-service-key').value.trim();
+  if(!url || !serviceRoleKey){
+    $$('pm-status').textContent='Fill in URL and service role key first.';
     $$('pm-status').style.color='#b91c1c'; return;
   }
+  // Preserve any previously-saved gala selection if the dropdown is currently empty
+  // (e.g. the user reopened the modal without re-clicking "Connect & load events").
+  const prevEventId   = (portalCfg && portalCfg.galaEventId)   || '';
+  const prevEventName = (portalCfg && portalCfg.galaEventName) || '';
   portalCfg = {
-    url: sanitizeUrl($$('pm-url').value.trim()),
-    serviceRoleKey: $$('pm-service-key').value.trim(),
-    galaEventId, galaEventName
+    url,
+    serviceRoleKey,
+    galaEventId:   galaEventId ? galaEventId   : prevEventId,
+    galaEventName: galaEventId ? galaEventName : prevEventName
   };
   // Save full config to Firestore so every device picks it up automatically
   try {
@@ -5435,6 +5442,15 @@ async function portalSaveSettings(){
   }
   // Also cache locally for instant page-load
   try { localStorage.setItem(PORTAL_LS_KEY, JSON.stringify(portalCfg)); } catch(e){}
+  // If we still don't have a Gala event picked, keep the modal open and tell the user
+  // exactly what to do next instead of closing with no feedback.
+  if(!portalCfg.galaEventId){
+    $$('pm-status').textContent = 'URL & key saved. Now click "Connect & load events", pick a Gala event, then Save again to enable syncing.';
+    $$('pm-status').style.color = '#166534';
+    await initPortalSupabase();
+    showToast('Portal URL & key saved.');
+    return;
+  }
   closePortalModal();
   await initPortalSupabase();
   showToast('Portal settings saved — synced to all devices.');
