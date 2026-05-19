@@ -1850,6 +1850,13 @@
         <div class="full">
           <label for="cfg-public-url" data-i18n="cfgPublicUrl">Public app URL (used for QR codes and email links)</label>
           <input type="url" id="cfg-public-url" data-i18n-placeholder="cfgPublicUrlPh" placeholder="https://yebouef.github.io/aico-tickets/" />
+          <div id="cfg-scanner-link-row" style="display:none;margin-top:8px;padding:10px 12px;background:var(--surface-alt,#f1f5f9);border:1px solid var(--border,#e2e8f0);border-radius:8px;font-size:12px;color:var(--muted,#64748b)">
+            <div style="font-weight:600;text-transform:uppercase;letter-spacing:.4px;font-size:10px;margin-bottom:4px" data-i18n="cfgScannerUrlLabel">Scanner URL</div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <a id="cfg-scanner-link" href="#" target="_blank" rel="noopener" style="word-break:break-all;color:var(--brand,#0d4a6b);text-decoration:none;font-weight:500"></a>
+              <button type="button" id="cfg-scanner-copy" style="padding:4px 10px;font-size:11px;border:1px solid var(--border,#cbd5e1);background:#fff;border-radius:5px;cursor:pointer" data-i18n="cfgScannerUrlCopy">Copy</button>
+            </div>
+          </div>
         </div>
         <div class="full">
           <label for="cfg-event-name" data-i18n="cfgEventName">Event name</label>
@@ -2350,6 +2357,9 @@ const I18N = {
     splashMsg: 'Connecting to the cloud...',
     eventConfigTitle: 'Event & Ticket Settings',
     cfgPublicUrl: 'Public app URL (used for QR codes and email links)',
+    cfgScannerUrlLabel: 'Scanner URL',
+    cfgScannerUrlCopy: 'Copy',
+    cfgScannerUrlCopied: 'Copied',
     cfgPublicUrlPh: 'https://yebouef.github.io/aico-tickets/',
     cfgEventName: 'Event name',
     cfgEventNamePh: 'e.g. AICO Annual Gala 2026',
@@ -2648,6 +2658,9 @@ const I18N = {
     eventConfigTitle: 'Paramètres de l’événement',
     cfgPublicUrl: 'URL publique de l’application (pour les QR codes et liens des courriels)',
     cfgPublicUrlPh: 'https://yebouef.github.io/aico-tickets/',
+    cfgScannerUrlLabel: 'URL du scanner',
+    cfgScannerUrlCopy: 'Copier',
+    cfgScannerUrlCopied: 'Copié',
     cfgEventName: 'Nom de l’événement',
     cfgEventNamePh: 'ex. Gala annuel AICO 2026',
     cfgEventDate: 'Date de l’événement',
@@ -2923,6 +2936,11 @@ function publicAppBaseUrl() {
     base = /^file:/i.test(location.href) ? DEFAULT_PUBLIC_URL : location.origin + location.pathname;
   }
   base = base.replace(/[?#].*$/, '');
+  // If the admin saved a bare host like "tickets.aicocolumbus.org" with no protocol,
+  // window.location.assign would treat it as a relative URL and 404. Auto-fix.
+  if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(base)) {
+    base = 'https://' + base.replace(/^\/+/, '');
+  }
 
   // GitHub Pages project sites must include the repository slug.
   // A root yebouef.github.io URL opens GitHub's "There isn't a Pages site here" 404.
@@ -3472,6 +3490,27 @@ $('new-seller-password').addEventListener('keydown', (e) => {
 
 $('save-config-btn').addEventListener('click', saveConfig);
 $('edit-config-btn').addEventListener('click', () => setConfigEditMode(true));
+// Live-update the Scanner URL preview as the admin types into the Public app URL field
+const _cfgPublicUrlEl = $('cfg-public-url');
+if (_cfgPublicUrlEl) _cfgPublicUrlEl.addEventListener('input', refreshScannerLinkPreview);
+const _cfgScannerCopyBtn = $('cfg-scanner-copy');
+if (_cfgScannerCopyBtn) _cfgScannerCopyBtn.addEventListener('click', async () => {
+  const link = $('cfg-scanner-link');
+  const url = link ? link.href : '';
+  if (!url) return;
+  try {
+    await navigator.clipboard.writeText(url);
+    const orig = _cfgScannerCopyBtn.textContent;
+    _cfgScannerCopyBtn.textContent = t('cfgScannerUrlCopied') || 'Copied';
+    setTimeout(() => { _cfgScannerCopyBtn.textContent = orig; }, 1400);
+  } catch (e) {
+    // Fallback for browsers without async clipboard
+    const ta = document.createElement('textarea');
+    ta.value = url; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (err) {}
+    document.body.removeChild(ta);
+  }
+});
 
 // Raffle
 $('raffle-form').addEventListener('submit', submitRaffleSale);
@@ -3730,8 +3769,32 @@ function applyConfigToInputs() {
   if ($('cfg-ejs-template')) $('cfg-ejs-template').value = appConfig.emailjsTemplateId || '';
   if ($('cfg-ejs-template-raffle')) $('cfg-ejs-template-raffle').value = appConfig.emailjsTemplateRaffleId || '';
   if ($('cfg-ejs-public')) $('cfg-ejs-public').value = appConfig.emailjsPublicKey || '';
+  refreshScannerLinkPreview();
   // Always lock the form when fresh data arrives from Firestore
   setConfigEditMode(false);
+}
+
+// Show the live, fully-resolved scanner URL (with auto-prepended https://, query
+// string, etc.) under the Public URL field so the admin can copy/open it for
+// sellers and verify the scanner button will work.
+function refreshScannerLinkPreview() {
+  const row = $('cfg-scanner-link-row');
+  const link = $('cfg-scanner-link');
+  if (!row || !link) return;
+  const input = $('cfg-public-url');
+  const raw = (input && input.value || appConfig.publicUrl || '').trim();
+  if (!raw) { row.style.display = 'none'; return; }
+  // Build the scanner URL using the same resolver the Scanner tab uses so what the
+  // admin sees here matches what clicking 📷 Scanner actually navigates to.
+  const prev = appConfig.publicUrl;
+  appConfig.publicUrl = raw;
+  let url = '';
+  try { url = scannerPageUrl(); } catch (e) { url = ''; }
+  appConfig.publicUrl = prev;
+  if (!url) { row.style.display = 'none'; return; }
+  link.textContent = url;
+  link.href = url;
+  row.style.display = '';
 }
 
 function setConfigEditMode(on) {
