@@ -1723,6 +1723,66 @@
       </div>
     </div>
 
+
+    <h3 class="section-divider" data-i18n="sectionRoster" style="margin:28px 0 10px 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--ink-soft);border-bottom:1px solid var(--ink-soft);padding-bottom:6px;opacity:.65">Roster</h3>
+
+    <div class="card">
+      <h2 data-i18n="compsTitle">Complimentary Tickets (VIPs &amp; Guests)</h2>
+      <p style="margin: -6px 0 14px 0; font-size: 12px; color: var(--ink-soft);" data-i18n="compsHelp">
+        Free tickets for VIPs, sponsors, board members, etc. They don't affect sales totals but still get QR codes and can be assigned to tables.
+      </p>
+      <div id="comps-list"></div>
+      <div id="comps-empty" class="empty" data-i18n="compsEmpty" style="display:none;">No complimentary tickets yet.</div>
+      <div class="comp-add">
+        <div>
+          <label for="new-comp-name" data-i18n="compName">Guest name</label>
+          <input type="text" id="new-comp-name" data-i18n-placeholder="compNamePh" placeholder="e.g. John Sponsor" />
+        </div>
+        <div>
+          <label for="new-comp-email" data-i18n="compEmail">Email (optional)</label>
+          <input type="email" id="new-comp-email" data-i18n-placeholder="compEmailPh" placeholder="To send their ticket" />
+        </div>
+        <div>
+          <label for="new-comp-guests" data-i18n="compGuests">Guests</label>
+          <input type="number" id="new-comp-guests" min="1" value="1" />
+        </div>
+        <div>
+          <label for="new-comp-notes" data-i18n="compNotes">Notes</label>
+          <input type="text" id="new-comp-notes" data-i18n-placeholder="compNotesPh" placeholder="e.g. Platinum sponsor" />
+        </div>
+        <button type="button" class="btn-primary" id="add-comp-btn" data-i18n="addComp">+ Add comp</button>
+      </div>
+    </div>
+
+
+    <div class="card">
+      <h2 data-i18n="sellersTitle">Sellers</h2>
+      <div id="sellers-list"></div>
+      <div id="sellers-empty" class="empty" data-i18n="sellersEmpty" style="display:none;">No sellers yet. Add one below.</div>
+      <div class="seller-add">
+        <div>
+          <label for="new-seller-name" data-i18n="newSellerName">Seller name</label>
+          <input type="text" id="new-seller-name" />
+        </div>
+        <div>
+          <label for="new-seller-password" data-i18n="newSellerPassword">Password</label>
+          <input type="text" id="new-seller-password" />
+        </div>
+        <div>
+          <label data-i18n="raffleRangeLabel">Raffle range (optional)</label>
+          <div class="range-input-wrap">
+            <input type="text" id="new-seller-range-start" data-i18n-placeholder="raffleRangeStartPh" placeholder="e.g. 20096-001" />
+            <span class="sep">→</span>
+            <input type="text" id="new-seller-range-end" data-i18n-placeholder="raffleRangeEndPh" placeholder="e.g. 20096-125" />
+          </div>
+        </div>
+        <button type="button" class="btn-primary" id="add-seller-btn" data-i18n="addSeller">+ Add seller</button>
+      </div>
+    </div>
+
+
+    <h3 class="section-divider" data-i18n="sectionSales" style="margin:28px 0 10px 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--ink-soft);border-bottom:1px solid var(--ink-soft);padding-bottom:6px;opacity:.65">Sales</h3>
+
     <div class="card">
       <h2 data-i18n="salesLog">Sales Log</h2>
       <div class="toolbar">
@@ -1758,6 +1818,7 @@
         <div id="empty-state" class="empty" data-i18n="emptyState">No sales recorded yet.</div>
       </div>
     </div>
+
 
     <div class="card">
       <h2 data-i18n="raffleSalesTitle">Raffle Sales</h2>
@@ -1813,33 +1874,59 @@
       </div>
     </div>
 
+
+    <h3 class="section-divider" data-i18n="sectionTables" style="margin:28px 0 10px 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--ink-soft);border-bottom:1px solid var(--ink-soft);padding-bottom:6px;opacity:.65">Tables</h3>
+
     <div class="card">
-      <h2 data-i18n="compsTitle">Complimentary Tickets (VIPs &amp; Guests)</h2>
-      <p style="margin: -6px 0 14px 0; font-size: 12px; color: var(--ink-soft);" data-i18n="compsHelp">
-        Free tickets for VIPs, sponsors, board members, etc. They don't affect sales totals but still get QR codes and can be assigned to tables.
+      <h2 data-i18n="tablesSetupTitle">Tables Setup</h2>
+      <p style="margin: -6px 0 14px 0; font-size: 12px; color: var(--ink-soft);" data-i18n="tablesSetupHelp">
+        Define each table and its seat capacity. Add tables as you figure out the layout.
       </p>
-      <div id="comps-list"></div>
-      <div id="comps-empty" class="empty" data-i18n="compsEmpty" style="display:none;">No complimentary tickets yet.</div>
-      <div class="comp-add">
+      <div id="tables-list" class="tables-list-grid"></div>
+      <div id="tables-empty" class="empty" data-i18n="tablesEmpty" style="display:none;">No tables yet. Add some below.</div>
+      <div class="add-table-row">
         <div>
-          <label for="new-comp-name" data-i18n="compName">Guest name</label>
-          <input type="text" id="new-comp-name" data-i18n-placeholder="compNamePh" placeholder="e.g. John Sponsor" />
+          <label for="new-table-name" data-i18n="newTableName">Table name</label>
+          <input type="text" id="new-table-name" data-i18n-placeholder="newTableNamePh" placeholder="e.g. Table 1 or VIP" />
         </div>
         <div>
-          <label for="new-comp-email" data-i18n="compEmail">Email (optional)</label>
-          <input type="email" id="new-comp-email" data-i18n-placeholder="compEmailPh" placeholder="To send their ticket" />
+          <label for="new-table-capacity" data-i18n="newTableCapacity">Capacity</label>
+          <input type="number" id="new-table-capacity" min="1" value="10" />
         </div>
-        <div>
-          <label for="new-comp-guests" data-i18n="compGuests">Guests</label>
-          <input type="number" id="new-comp-guests" min="1" value="1" />
-        </div>
-        <div>
-          <label for="new-comp-notes" data-i18n="compNotes">Notes</label>
-          <input type="text" id="new-comp-notes" data-i18n-placeholder="compNotesPh" placeholder="e.g. Platinum sponsor" />
-        </div>
-        <button type="button" class="btn-primary" id="add-comp-btn" data-i18n="addComp">+ Add comp</button>
+        <button type="button" class="btn-primary" id="add-table-btn" data-i18n="addTable">+ Add table</button>
+      </div>
+      <div class="bulk-add-row">
+        <span data-i18n="bulkAddLabel">Quick: add</span>
+        <input type="number" id="bulk-count" min="1" max="50" value="10" />
+        <span data-i18n="bulkAddTablesOf">tables of</span>
+        <input type="number" id="bulk-capacity" min="1" value="10" />
+        <span data-i18n="bulkAddSeats">seats</span>
+        <button type="button" class="btn-secondary" id="bulk-add-tables-btn" data-i18n="addBulk">Add bulk</button>
       </div>
     </div>
+
+
+    <div class="card">
+      <h2 data-i18n="tableAssignmentsTitle">Table Assignments</h2>
+      <div class="assign-summary" id="assign-summary">
+        <div class="item"><div class="value" id="assign-summary-assigned">0</div><div class="label" data-i18n="summaryAssigned">Assigned</div></div>
+        <div class="item"><div class="value" id="assign-summary-unassigned">0</div><div class="label" data-i18n="summaryUnassigned">Unassigned</div></div>
+        <div class="item"><div class="value" id="assign-summary-tables">0</div><div class="label" data-i18n="summaryTables">Tables defined</div></div>
+      </div>
+      <div class="toolbar">
+        <input type="text" id="assign-search" data-i18n-placeholder="assignSearchPh" placeholder="Search by buyer..." />
+        <select id="assign-filter">
+          <option value="all" data-i18n="filterAll">All sales</option>
+          <option value="unassigned" data-i18n="filterUnassigned">Unassigned only</option>
+          <option value="assigned" data-i18n="filterAssigned">Assigned only</option>
+        </select>
+      </div>
+      <div id="assignments-list"></div>
+      <div id="assignments-empty" class="empty" data-i18n="assignEmpty" style="display:none;">No sales to assign yet.</div>
+    </div>
+
+
+    <h3 class="section-divider" data-i18n="sectionSettings" style="margin:28px 0 10px 4px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--ink-soft);border-bottom:1px solid var(--ink-soft);padding-bottom:6px;opacity:.65">Settings</h3>
 
     <div class="card config-locked" id="config-card">
       <div class="config-header">
@@ -1910,30 +1997,6 @@
       </div>
     </div>
 
-    <div class="card">
-      <h2 data-i18n="sellersTitle">Sellers</h2>
-      <div id="sellers-list"></div>
-      <div id="sellers-empty" class="empty" data-i18n="sellersEmpty" style="display:none;">No sellers yet. Add one below.</div>
-      <div class="seller-add">
-        <div>
-          <label for="new-seller-name" data-i18n="newSellerName">Seller name</label>
-          <input type="text" id="new-seller-name" />
-        </div>
-        <div>
-          <label for="new-seller-password" data-i18n="newSellerPassword">Password</label>
-          <input type="text" id="new-seller-password" />
-        </div>
-        <div>
-          <label data-i18n="raffleRangeLabel">Raffle range (optional)</label>
-          <div class="range-input-wrap">
-            <input type="text" id="new-seller-range-start" data-i18n-placeholder="raffleRangeStartPh" placeholder="e.g. 20096-001" />
-            <span class="sep">→</span>
-            <input type="text" id="new-seller-range-end" data-i18n-placeholder="raffleRangeEndPh" placeholder="e.g. 20096-125" />
-          </div>
-        </div>
-        <button type="button" class="btn-primary" id="add-seller-btn" data-i18n="addSeller">+ Add seller</button>
-      </div>
-    </div>
 
     <div class="card config-locked" id="raffle-config-card">
       <div class="config-header">
@@ -1968,52 +2031,6 @@
       </div>
     </div>
 
-    <div class="card">
-      <h2 data-i18n="tablesSetupTitle">Tables Setup</h2>
-      <p style="margin: -6px 0 14px 0; font-size: 12px; color: var(--ink-soft);" data-i18n="tablesSetupHelp">
-        Define each table and its seat capacity. Add tables as you figure out the layout.
-      </p>
-      <div id="tables-list" class="tables-list-grid"></div>
-      <div id="tables-empty" class="empty" data-i18n="tablesEmpty" style="display:none;">No tables yet. Add some below.</div>
-      <div class="add-table-row">
-        <div>
-          <label for="new-table-name" data-i18n="newTableName">Table name</label>
-          <input type="text" id="new-table-name" data-i18n-placeholder="newTableNamePh" placeholder="e.g. Table 1 or VIP" />
-        </div>
-        <div>
-          <label for="new-table-capacity" data-i18n="newTableCapacity">Capacity</label>
-          <input type="number" id="new-table-capacity" min="1" value="10" />
-        </div>
-        <button type="button" class="btn-primary" id="add-table-btn" data-i18n="addTable">+ Add table</button>
-      </div>
-      <div class="bulk-add-row">
-        <span data-i18n="bulkAddLabel">Quick: add</span>
-        <input type="number" id="bulk-count" min="1" max="50" value="10" />
-        <span data-i18n="bulkAddTablesOf">tables of</span>
-        <input type="number" id="bulk-capacity" min="1" value="10" />
-        <span data-i18n="bulkAddSeats">seats</span>
-        <button type="button" class="btn-secondary" id="bulk-add-tables-btn" data-i18n="addBulk">Add bulk</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2 data-i18n="tableAssignmentsTitle">Table Assignments</h2>
-      <div class="assign-summary" id="assign-summary">
-        <div class="item"><div class="value" id="assign-summary-assigned">0</div><div class="label" data-i18n="summaryAssigned">Assigned</div></div>
-        <div class="item"><div class="value" id="assign-summary-unassigned">0</div><div class="label" data-i18n="summaryUnassigned">Unassigned</div></div>
-        <div class="item"><div class="value" id="assign-summary-tables">0</div><div class="label" data-i18n="summaryTables">Tables defined</div></div>
-      </div>
-      <div class="toolbar">
-        <input type="text" id="assign-search" data-i18n-placeholder="assignSearchPh" placeholder="Search by buyer..." />
-        <select id="assign-filter">
-          <option value="all" data-i18n="filterAll">All sales</option>
-          <option value="unassigned" data-i18n="filterUnassigned">Unassigned only</option>
-          <option value="assigned" data-i18n="filterAssigned">Assigned only</option>
-        </select>
-      </div>
-      <div id="assignments-list"></div>
-      <div id="assignments-empty" class="empty" data-i18n="assignEmpty" style="display:none;">No sales to assign yet.</div>
-    </div>
 
   </section>
 
@@ -2360,6 +2377,10 @@ const I18N = {
     cfgScannerUrlLabel: 'Scanner URL',
     cfgScannerUrlCopy: 'Copy',
     cfgScannerUrlCopied: 'Copied',
+    sectionRoster: 'Roster',
+    sectionSales: 'Sales',
+    sectionTables: 'Tables',
+    sectionSettings: 'Settings',
     cfgPublicUrlPh: 'https://yebouef.github.io/aico-tickets/',
     cfgEventName: 'Event name',
     cfgEventNamePh: 'e.g. AICO Annual Gala 2026',
@@ -2661,6 +2682,10 @@ const I18N = {
     cfgScannerUrlLabel: 'URL du scanner',
     cfgScannerUrlCopy: 'Copier',
     cfgScannerUrlCopied: 'Copié',
+    sectionRoster: 'Équipe',
+    sectionSales: 'Ventes',
+    sectionTables: 'Tables',
+    sectionSettings: 'Paramètres',
     cfgEventName: 'Nom de l’événement',
     cfgEventNamePh: 'ex. Gala annuel AICO 2026',
     cfgEventDate: 'Date de l’événement',
