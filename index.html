@@ -3832,11 +3832,13 @@ function buildEmailParams(sale, recipientEmail) {
     const name = c ? t(c.i18nKey) : l.cat;
     return `${l.qty} x ${name} — $${l.subtotal.toFixed(2)}`;
   }).join('\n');
+  const totalSeats = (sale.lines || []).reduce((s, l) => s + (Number(l.qty) || 0), 0);
   return {
     to_email: recipientEmail,
     buyer_name: sale.buyer || '',
     buyer_email: sale.buyerEmail || '',
     sale_id: sale.saleId,
+    purchase_type: totalSeats > 1 ? 'tickets' : 'ticket',
     event_name: appConfig.eventName || 'AICO Event',
     event_date: appConfig.eventDate || '',
     event_location: appConfig.eventLocation || '',
@@ -4218,12 +4220,14 @@ function resetRaffleForm() {
 
 function buildRaffleEmailParams(sale, recipient) {
   const numbersList = (sale.ticketNumbers || []).join(', ');
+  const qty = sale.quantity || (sale.ticketNumbers||[]).length;
   return {
     to_email: recipient,
     buyer_name: sale.buyer || '',
     buyer_email: sale.buyerEmail || '',
     sale_id: sale.saleId,
-    event_name: appConfig.raffleName || 'AICO Raffle',
+    purchase_type: qty > 1 ? 'raffle tickets' : 'raffle ticket',
+    event_name: appConfig.eventName || appConfig.raffleName || 'AICO Event',
     event_date: appConfig.eventDate || '',
     event_location: appConfig.eventLocation || '',
     contact_email: appConfig.contactEmail || '',
@@ -4559,10 +4563,12 @@ async function resendCompEmail(compId) {
 
 function buildCompEmailParams(comp, recipient) {
   const ticketUrl = ticketUrlFor(comp.compId);
+  const guests = Number(comp.guests) || 1;
   return {
     to_email: recipient,
     buyer_name: comp.name || '',
     buyer_email: comp.email || '',
+    purchase_type: guests > 1 ? 'complimentary tickets' : 'complimentary ticket',
     sale_id: comp.compId,
     event_name: appConfig.eventName || 'AICO Event',
     event_date: appConfig.eventDate || '',
