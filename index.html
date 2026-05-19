@@ -1624,7 +1624,7 @@
           </div>
           <div>
             <label for="raffle-count" data-i18n="raffleCount">Number of tickets</label>
-            <input type="number" id="raffle-count" min="1" value="1" required />
+            <input type="number" id="raffle-count" min="1" placeholder="e.g. 5" required />
           </div>
         </div>
 
@@ -4194,7 +4194,10 @@ function updateRaffleParseAndTotals() {
 
 function resetRaffleForm() {
   $('raffle-form').reset();
-  $('raffle-count').value = '1';
+  // Leave count empty after a sale so the totals show $0 until the next
+  // buyer's count is entered. (form.reset() does NOT clear a field that
+  // has a hardcoded value="1" in the HTML — so we have to clear it explicitly.)
+  $('raffle-count').value = '';
   $('raffle-amount-received').value = '0';
   $('raffle-parsed').style.display = 'none';
   $('raffle-payment-other').style.display = 'none';
