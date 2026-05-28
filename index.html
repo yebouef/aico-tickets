@@ -4864,8 +4864,13 @@ function renderTableAssignments() {
   if (filter === 'unassigned') visible = visible.filter(x => !x.tableName);
   if (filter === 'assigned') visible = visible.filter(x => !!x.tableName);
 
-  const totalAssigned = combined.filter(x => x.tableName).length;
-  const totalUnassigned = combined.length - totalAssigned;
+  // Sum seats (guests), not sale records — one buyer can purchase multiple tickets.
+  const totalAssigned = combined
+    .filter(x => x.tableName)
+    .reduce((sum, x) => sum + (Number(x.guests) || 0), 0);
+  const totalUnassigned = combined
+    .filter(x => !x.tableName)
+    .reduce((sum, x) => sum + (Number(x.guests) || 0), 0);
   $('assign-summary-assigned').textContent = totalAssigned;
   $('assign-summary-unassigned').textContent = totalUnassigned;
   $('assign-summary-tables').textContent = tables.length;
