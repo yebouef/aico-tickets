@@ -2359,9 +2359,9 @@ const I18N = {
     memberSplit: 'Member {m} / Non-member {n}',
     alertNoLines: 'Please add at least one line item with a category and quantity.',
     confirmExceedInv: 'This sale has {x} tickets but only {y} remain in inventory. Record anyway?',
-    confirmDeleteSale: 'Delete this entire sale? This cannot be undone.',
-    confirmClearAll1: 'Delete ALL sales records? This cannot be undone.',
-    confirmClearAll2: 'Are you absolutely sure? All sales data will be lost.',
+    confirmDeleteSale: 'Delete this entire sale? This will void its QR code and remove its portal payment on the next sync.',
+    confirmClearAll1: 'Delete ALL sales records? This will void every ticket QR code and remove matching portal payments on the next sync.',
+    confirmClearAll2: 'Are you absolutely sure? All active sales data will be voided.',
     alertNoSalesExport: 'No sales to export.',
     toastSaved: 'Sale recorded.',
     toastSellerAdded: 'Seller added.',
@@ -2419,6 +2419,9 @@ const I18N = {
     openTicket: 'Open ticket',
     done: 'Done',
     ticketNotFound: 'Ticket not found.',
+    ticketVoided: 'VOID - Ticket cancelled',
+    ticketVoidedBody: 'This ticket was cancelled and can no longer be used for entry.',
+    ticketVoidedDeletedAt: 'Voided on',
     tabScanner: 'Scanner',
     tabScannerNav: '📷 Scanner',
     scannerTitle: 'Ticket Scanner',
@@ -2433,6 +2436,8 @@ const I18N = {
     recentScansEmpty: 'No check-ins yet.',
     scanValid: 'VALID',
     scanUsed: 'ALREADY CHECKED IN',
+    scanVoided: 'VOID TICKET',
+    scanVoidedBody: 'This sale was deleted. Do not check this ticket in.',
     scanInvalid: 'TICKET NOT FOUND',
     scanCheckedInAt: 'Checked in at',
     scanBy: 'by',
@@ -2663,9 +2668,9 @@ const I18N = {
     memberSplit: 'Membre {m} / Non-membre {n}',
     alertNoLines: 'Veuillez ajouter au moins un article avec une catégorie et une quantité.',
     confirmExceedInv: 'Cette vente comporte {x} billets, mais il n’en reste que {y} en inventaire. Enregistrer quand même ?',
-    confirmDeleteSale: 'Supprimer toute cette vente ? Cette action est irréversible.',
-    confirmClearAll1: 'Supprimer TOUS les enregistrements ? Cette action est irréversible.',
-    confirmClearAll2: 'Êtes-vous absolument sûr ? Toutes les données seront perdues.',
+    confirmDeleteSale: 'Supprimer toute cette vente ? Le QR code sera annulé et le paiement portail sera retiré à la prochaine synchro.',
+    confirmClearAll1: 'Supprimer TOUTES les ventes ? Tous les QR codes seront annulés et les paiements portail correspondants seront retirés à la prochaine synchro.',
+    confirmClearAll2: 'Êtes-vous absolument sûr ? Toutes les ventes actives seront annulées.',
     alertNoSalesExport: 'Aucune vente à exporter.',
     toastSaved: 'Vente enregistrée.',
     toastSellerAdded: 'Vendeur ajouté.',
@@ -2723,6 +2728,9 @@ const I18N = {
     openTicket: 'Ouvrir le billet',
     done: 'Terminé',
     ticketNotFound: 'Billet introuvable.',
+    ticketVoided: 'ANNULÉ - Billet annulé',
+    ticketVoidedBody: 'Ce billet a été annulé et ne peut plus être utilisé à l’entrée.',
+    ticketVoidedDeletedAt: 'Annulé le',
     tabScanner: 'Scanner',
     tabScannerNav: '📷 Scanner',
     scannerTitle: 'Scanner de billets',
@@ -2737,6 +2745,8 @@ const I18N = {
     recentScansEmpty: 'Aucun passage pour l’instant.',
     scanValid: 'VALIDE',
     scanUsed: 'DÉJÀ UTILISÉ',
+    scanVoided: 'BILLET ANNULÉ',
+    scanVoidedBody: 'Cette vente a été supprimée. Ne validez pas ce billet.',
     scanInvalid: 'BILLET INTROUVABLE',
     scanCheckedInAt: 'Validé à',
     scanBy: 'par',
@@ -2837,6 +2847,67 @@ function saveLang() { localStorage.setItem(LANG_KEY, lang); }
 function saveUser() {
   if (currentUser) sessionStorage.setItem(USER_KEY, JSON.stringify(currentUser));
   else sessionStorage.removeItem(USER_KEY);
+}
+
+function portalPaymentIdForSale(saleId) {
+  return 'p-tix-' + saleId;
+}
+
+function actorName() {
+  if (!currentUser) return '';
+  return currentUser.name || t('adminLabel');
+}
+
+function deletedSaleRecord(saleId, sale = {}) {
+  return {
+    saleId,
+    paymentId: portalPaymentIdForSale(saleId),
+    deletedAt: serverTimestamp(),
+    deletedBy: actorName(),
+    portalDeleteSynced: false,
+    buyer: sale.buyer || '',
+    buyerEmail: sale.buyerEmail || '',
+    seller: sale.seller || '',
+    date: sale.date || '',
+    payment: sale.payment || '',
+    paymentOther: sale.paymentOther || '',
+    received: Number(sale.received) || 0,
+    total: Number(sale.total) || 0,
+    balance: Number(sale.balance) || 0,
+    tableName: sale.tableName || '',
+    notes: sale.notes || '',
+    lines: Array.isArray(sale.lines) ? sale.lines : [],
+  };
+}
+
+async function getDeletedSale(saleId) {
+  try {
+    const snap = await getDoc(doc(db, 'deletedSales', saleId));
+    return snap.exists() ? { ...snap.data(), _docId: snap.id } : null;
+  } catch (e) {
+    console.warn('Deleted sale lookup failed', e);
+    return null;
+  }
+}
+
+async function voidAndDeleteSale(saleId, saleHint = null) {
+  const saleRef = doc(db, 'sales', saleId);
+  let sale = saleHint;
+  if (!sale) {
+    const saleSnap = await getDoc(saleRef);
+    if (!saleSnap.exists()) return;
+    sale = { ...saleSnap.data(), _docId: saleSnap.id };
+  }
+  const batch = writeBatch(db);
+  batch.set(doc(db, 'deletedSales', saleId), deletedSaleRecord(saleId, sale), { merge: true });
+  batch.delete(saleRef);
+  await batch.commit();
+}
+
+function formatDeletedAt(ts) {
+  if (!ts) return '';
+  const d = ts.toDate ? ts.toDate() : (ts.seconds ? new Date(ts.seconds * 1000) : new Date(ts));
+  return Number.isNaN(d.getTime()) ? '' : d.toLocaleString(I18N[lang].locale);
 }
 
 function showToast(msg, isError = false) {
@@ -3396,7 +3467,7 @@ function renderLog() {
     btn.addEventListener('click', async () => {
       const id = btn.getAttribute('data-del');
       if (!confirm(t('confirmDeleteSale'))) return;
-      try { await deleteDoc(doc(db, 'sales', id)); }
+      try { await voidAndDeleteSale(id, sales.find(s => s.saleId === id)); }
       catch (e) { showToast(t('toastError') + e.message, true); }
     });
   });
@@ -3444,7 +3515,11 @@ $('clear-all').addEventListener('click', async () => {
   try {
     const snap = await getDocs(collection(db, 'sales'));
     const batch = writeBatch(db);
-    snap.docs.forEach(d => batch.delete(d.ref));
+    snap.docs.forEach(d => {
+      const saleId = d.id;
+      batch.set(doc(db, 'deletedSales', saleId), deletedSaleRecord(saleId, d.data()), { merge: true });
+      batch.delete(d.ref);
+    });
     await batch.commit();
   } catch (e) {
     showToast(t('toastError') + e.message, true);
@@ -4012,6 +4087,32 @@ async function showPostSaleModal(sale) {
   status.innerHTML = lines.join('');
 }
 
+function renderVoidedTicketView(content, ticketId, deletedSale) {
+  const deletedAt = formatDeletedAt(deletedSale.deletedAt);
+  const eventLine = [appConfig.eventDate, appConfig.eventLocation].filter(Boolean).join(' • ');
+  content.innerHTML = `
+    <div class="ticket-header" style="background: linear-gradient(135deg, #7f1d1d, #dc2626);">
+      <div class="brand">${escapeHtml(t('tBrand'))}</div>
+      <h2>${escapeHtml(t('ticketVoided'))}</h2>
+      ${eventLine ? `<div class="event-meta">${escapeHtml(eventLine)}</div>` : ''}
+    </div>
+    <div class="ticket-body">
+      <div class="ticket-total" style="background: var(--bad-soft); color: var(--bad);">
+        <span>${escapeHtml(t('ticketVoided'))}</span>
+        <span>${escapeHtml(ticketId)}</span>
+      </div>
+      <p style="margin: 0 0 16px; color: var(--ink); font-weight: 600;">${escapeHtml(t('ticketVoidedBody'))}</p>
+      <div class="ticket-row"><span class="lbl">${escapeHtml(t('tSaleId'))}</span><span class="val">${escapeHtml(ticketId)}</span></div>
+      ${deletedSale.buyer ? `<div class="ticket-row"><span class="lbl">${escapeHtml(t('tBuyer'))}</span><span class="val">${escapeHtml(deletedSale.buyer)}</span></div>` : ''}
+      ${deletedAt ? `<div class="ticket-row"><span class="lbl">${escapeHtml(t('ticketVoidedDeletedAt'))}</span><span class="val">${escapeHtml(deletedAt)}</span></div>` : ''}
+    </div>
+    <div class="ticket-footer">
+      ${escapeHtml(t('ticketVoidedBody'))}
+      ${appConfig.contactEmail ? `<br><a href="mailto:${escapeHtml(appConfig.contactEmail)}" style="color:var(--accent);">${escapeHtml(appConfig.contactEmail)}</a>` : ''}
+    </div>
+  `;
+}
+
 // --- Public ticket view (when ?ticket=SALEID is in URL) ---
 async function renderTicketView(ticketId) {
   currentTicketSaleId = ticketId;
@@ -4024,12 +4125,14 @@ async function renderTicketView(ticketId) {
 
   const isComp = ticketId.startsWith('C');
   let sale = null;
+  let deletedSale = null;
   try {
     const snap = await getDoc(doc(db, isComp ? 'comps' : 'sales', ticketId));
     if (snap.exists()) sale = { ...snap.data(), _docId: snap.id };
   } catch (e) {
     console.warn('Ticket fetch failed', e);
   }
+  if (!sale && !isComp) deletedSale = await getDeletedSale(ticketId);
 
   // Normalize comp into a sale-like shape for the renderer below
   if (sale && isComp) {
@@ -4063,6 +4166,11 @@ async function renderTicketView(ticketId) {
   } catch (e) { /* not fatal */ }
 
   if (!sale) {
+    if (deletedSale) {
+      $('ticket-error').style.display = 'none';
+      renderVoidedTicketView(content, ticketId, deletedSale);
+      return;
+    }
     content.innerHTML = '';
     $('ticket-error').style.display = 'block';
     return;
@@ -4248,9 +4356,24 @@ function updateRaffleParseAndTotals() {
   const count = parseInt(countEl.value, 10) || 0;
   const price = Number(appConfig.raffleTicketPrice) || 0;
 
+  // Totals are computed from count × price regardless of whether the starting
+  // number has been entered. The starting number is only needed to render the
+  // "Will record" ticket-number chips and to actually save the sale.
+  const total = count * price;
+  const received = parseFloat($('raffle-amount-received').value) || 0;
+  const balance = total - received;
+  $('raffle-total-expected').textContent = fmt(total);
+  $('raffle-total-received').textContent = fmt(received);
+  const balEl = $('raffle-balance');
+  if (balEl) {
+    balEl.textContent = fmt(balance);
+    balEl.className = 'value ' + (balance > 0.001 ? 'balance-due' : balance < -0.001 ? 'balance-paid' : 'balance-zero');
+  }
+
+  // The ticket-number chips ("Will record: 20096-001, 20096-002, ...") only
+  // make sense once both a starting number and a count are provided.
   if (!start || count < 1) {
     parsedEl.style.display = 'none';
-    $('raffle-total-expected').textContent = fmt(0);
     return;
   }
 
@@ -4269,15 +4392,6 @@ function updateRaffleParseAndTotals() {
     <div style="margin-top:6px;">${chips}</div>
     ${dupes.length > 0 ? `<div style="margin-top:6px;" class="warn">${escapeHtml(t('raffleParsedDupes'))}${dupes.map(escapeHtml).join(', ')}</div>` : ''}
   `;
-
-  const total = numbers.length * price;
-  const received = parseFloat($('raffle-amount-received').value) || 0;
-  const balance = total - received;
-  $('raffle-total-expected').textContent = fmt(total);
-  $('raffle-total-received').textContent = fmt(received);
-  const balEl = $('raffle-balance');
-  balEl.textContent = fmt(balance);
-  balEl.className = 'value ' + (balance > 0.001 ? 'balance-due' : balance < -0.001 ? 'balance-paid' : 'balance-zero');
 }
 
 function resetRaffleForm() {
@@ -5047,14 +5161,35 @@ async function handleScannedTicket(ticketId) {
   const isComp = ticketId.startsWith('C');
   const collName = isComp ? 'comps' : 'sales';
   let sale = null;
+  let deletedSale = null;
   try {
     const snap = await getDoc(doc(db, collName, ticketId));
     if (snap.exists()) sale = { ...snap.data(), _docId: snap.id, _kind: isComp ? 'comp' : 'sale' };
   } catch (e) {
     console.warn('Lookup failed', e);
   }
+  if (!sale && !isComp) deletedSale = await getDeletedSale(ticketId);
 
   if (!sale) {
+    if (deletedSale) {
+      const deletedAt = formatDeletedAt(deletedSale.deletedAt);
+      resEl.className = 'scan-result used show';
+      resEl.innerHTML = `
+        <div class="big">⛔ ${escapeHtml(t('scanVoided'))}</div>
+        <div class="who">${escapeHtml(deletedSale.buyer || '—')}</div>
+        <div class="sub">${escapeHtml(t('scanVoidedBody'))}</div>
+        <div class="scan-details">
+          <div class="scan-detail-row">
+            <span class="lbl">${escapeHtml(t('scanDetailSaleId'))}</span>
+            <span class="val" style="font-family: ui-monospace, Menlo, monospace; font-size:12px;">${escapeHtml(ticketId)}</span>
+          </div>
+          ${deletedAt ? `<div class="scan-detail-row"><span class="lbl">${escapeHtml(t('ticketVoidedDeletedAt'))}</span><span class="val">${escapeHtml(deletedAt)}</span></div>` : ''}
+        </div>
+        <button type="button" id="scan-dismiss">${escapeHtml(t('scanContinue'))}</button>
+      `;
+      $('scan-dismiss').onclick = clearScanResult;
+      return;
+    }
     resEl.className = 'scan-result invalid show';
     resEl.innerHTML = `
       <div class="big">⚠ ${escapeHtml(t('scanInvalid'))}</div>
@@ -5559,54 +5694,89 @@ async function syncToPortal(){
     if(!ok){ alert('Could not connect to Portal. Check ⚙ Portal settings.'); status.textContent=''; return; }
   }
   if(!portalCfg.galaEventId){ alert('No Gala event configured. Open ⚙ Portal to set one.'); return; }
-  const unsynced = sales.filter(s => !s.syncedToPortal);
-  if(unsynced.length === 0){ status.textContent='Nothing new to sync.'; return; }
-  btn.disabled = true; status.textContent = `Syncing ${unsynced.length} sale(s)…`; status.style.color='#64748b';
-  let synced=0, newContacts=0, totalAmount=0, failed=0;
-  for(const sale of unsynced){
-    try {
-      const buyer = sale.buyerInfo;
-      let memberId=null, contactId=null;
-      if(buyer && buyer.type==='member' && buyer.memberId){
-        memberId = buyer.memberId;
-      } else {
-        const fn = (buyer && buyer.firstName) ? buyer.firstName : ((sale.buyer||'Unknown').split(/\s+/)[0]||'Unknown');
-        const ln = (buyer && buyer.lastName) ? buyer.lastName : ((sale.buyer||'').split(/\s+/).slice(1).join(' ')||'');
-        if(!fn.trim() && !ln.trim()){ failed++; continue; }
-        const existing = portalContacts.find(c =>
-          (c.first_name||'').toLowerCase()===fn.toLowerCase() &&
-          (c.last_name||'').toLowerCase()===ln.toLowerCase()
-        );
-        if(existing){ contactId = existing.id; }
-        else {
-          const newCid = 'c-tix-' + Math.random().toString(36).slice(2,9);
-          const { error: ce } = await sbClient.from('contacts').insert({
-            id: newCid, first_name: titleCaseSimple(fn), last_name: titleCaseSimple(ln),
-            email: (buyer && buyer.email) || sale.buyerEmail || null,
-            phone: (buyer && buyer.phone) || null,
-            status:'prospect', source:'Gala ticket sale '+sale.date, notes:'Added via Tickets app'
-          });
-          if(ce){ console.warn('contact insert failed', ce); failed++; continue; }
-          contactId = newCid; newContacts++;
-          portalContacts.push({ id:newCid, first_name:fn, last_name:ln });
+  btn.disabled = true; status.textContent = 'Checking tickets and deleted sales…'; status.style.color='#64748b';
+  let synced=0, newContacts=0, totalAmount=0, failed=0, portalRemoved=0;
+  try {
+    const deletedSnap = await getDocs(collection(db, 'deletedSales'));
+    const pendingDeletedSales = deletedSnap.docs
+      .map(d => ({ ...d.data(), _docId: d.id }))
+      .filter(d => !d.portalDeleteSynced);
+    const activeSnap = await getDocs(collection(db, 'sales'));
+    const activeSales = activeSnap.docs.map(d => ({ ...d.data(), _docId: d.id, saleId: d.data().saleId || d.id }));
+    const pendingDeletedIds = new Set(pendingDeletedSales.map(d => d.saleId || d._docId));
+    const unsynced = activeSales.filter(s => !s.syncedToPortal && !pendingDeletedIds.has(s.saleId));
+    if(pendingDeletedSales.length === 0 && unsynced.length === 0){
+      status.textContent='Nothing new to sync.';
+      return;
+    }
+    status.textContent = `Reconciling ${pendingDeletedSales.length} deleted sale(s), then syncing ${unsynced.length} sale(s)…`;
+
+    for(const deletedSale of pendingDeletedSales){
+      const saleId = deletedSale.saleId || deletedSale._docId;
+      const paymentId = deletedSale.paymentId || portalPaymentIdForSale(saleId);
+      try {
+        const { error: delErr } = await sbClient.from('payments').delete().eq('id', paymentId);
+        if(delErr){ console.warn('portal payment delete failed', delErr); failed++; continue; }
+        await setDoc(doc(db, 'deletedSales', saleId), {
+          paymentId,
+          portalDeleteSynced: true,
+          portalDeletedAt: serverTimestamp(),
+          portalDeletedBy: actorName(),
+        }, { merge: true });
+        portalRemoved++;
+      } catch(e){ console.error('portal delete sync error for', saleId, e); failed++; }
+    }
+
+    for(const sale of unsynced){
+      try {
+        const buyer = sale.buyerInfo;
+        let memberId=null, contactId=null;
+        if(buyer && buyer.type==='member' && buyer.memberId){
+          memberId = buyer.memberId;
+        } else {
+          const fn = (buyer && buyer.firstName) ? buyer.firstName : ((sale.buyer||'Unknown').split(/\s+/)[0]||'Unknown');
+          const ln = (buyer && buyer.lastName) ? buyer.lastName : ((sale.buyer||'').split(/\s+/).slice(1).join(' ')||'');
+          if(!fn.trim() && !ln.trim()){ failed++; continue; }
+          const existing = portalContacts.find(c =>
+            (c.first_name||'').toLowerCase()===fn.toLowerCase() &&
+            (c.last_name||'').toLowerCase()===ln.toLowerCase()
+          );
+          if(existing){ contactId = existing.id; }
+          else {
+            const newCid = 'c-tix-' + Math.random().toString(36).slice(2,9);
+            const { error: ce } = await sbClient.from('contacts').insert({
+              id: newCid, first_name: titleCaseSimple(fn), last_name: titleCaseSimple(ln),
+              email: (buyer && buyer.email) || sale.buyerEmail || null,
+              phone: (buyer && buyer.phone) || null,
+              status:'prospect', source:'Gala ticket sale '+sale.date, notes:'Added via Tickets app'
+            });
+            if(ce){ console.warn('contact insert failed', ce); failed++; continue; }
+            contactId = newCid; newContacts++;
+            portalContacts.push({ id:newCid, first_name:fn, last_name:ln });
+          }
         }
-      }
-      const paymentId = 'p-tix-' + sale.saleId;
-      const linesText = sale.lines.map(l => `${l.qty}×${l.cat}@$${l.unit}`).join(', ');
-      const notesText = `Gala ticket sale (seller: ${sale.seller}). Payment: ${sale.payment}${sale.paymentOther?' ('+sale.paymentOther+')':''}. Lines: ${linesText}. Total: $${sale.total.toFixed(2)} · Received: $${sale.received.toFixed(2)}.${sale.buyerEmail?' Buyer email: '+sale.buyerEmail+'.':''}${sale.notes?' Note: '+sale.notes:''}`;
-      const { error: pe } = await sbClient.from('payments').insert({
-        id: paymentId, member_id: memberId, contact_id: contactId,
-        date: sale.date, amount: sale.received, type:'gala',
-        event_id: portalCfg.galaEventId, notes: notesText
-      });
-      if(pe && pe.code !== '23505'){ console.warn('payment insert failed', pe); failed++; continue; }
-      await updateDoc(doc(db, 'sales', sale.saleId), { syncedToPortal: true });
-      synced++; totalAmount += Number(sale.received||0);
-    } catch(e){ console.error('sync error for', sale.saleId, e); failed++; }
+        const paymentId = 'p-tix-' + sale.saleId;
+        const linesText = sale.lines.map(l => `${l.qty}×${l.cat}@$${l.unit}`).join(', ');
+        const notesText = `Gala ticket sale (seller: ${sale.seller}). Payment: ${sale.payment}${sale.paymentOther?' ('+sale.paymentOther+')':''}. Lines: ${linesText}. Total: $${sale.total.toFixed(2)} · Received: $${sale.received.toFixed(2)}.${sale.buyerEmail?' Buyer email: '+sale.buyerEmail+'.':''}${sale.notes?' Note: '+sale.notes:''}`;
+        const { error: pe } = await sbClient.from('payments').insert({
+          id: paymentId, member_id: memberId, contact_id: contactId,
+          date: sale.date, amount: sale.received, type:'gala',
+          event_id: portalCfg.galaEventId, notes: notesText
+        });
+        if(pe && pe.code !== '23505'){ console.warn('payment insert failed', pe); failed++; continue; }
+        await setDoc(doc(db, 'sales', sale.saleId), { syncedToPortal: true }, { merge: true });
+        synced++; totalAmount += Number(sale.received||0);
+      } catch(e){ console.error('sync error for', sale.saleId, e); failed++; }
+    }
+    status.style.color = failed>0 ? '#b91c1c' : '#166534';
+    status.textContent = `Removed ${portalRemoved} deleted portal payment(s) · Synced ${synced} sale(s) · ${newContacts} new contact(s) · $${totalAmount.toFixed(2)} added to Portal${failed>0?` · ${failed} failed (see console)`:''}.`;
+  } catch(e) {
+    console.error('portal sync failed', e);
+    status.style.color = '#b91c1c';
+    status.textContent = 'Portal sync failed: ' + e.message;
+  } finally {
+    btn.disabled = false;
   }
-  btn.disabled = false;
-  status.style.color = failed>0 ? '#b91c1c' : '#166534';
-  status.textContent = `Synced ${synced} sale(s) · ${newContacts} new contact(s) · $${totalAmount.toFixed(2)} added to Portal${failed>0?` · ${failed} failed (see console)`:''}.`;
 }
 
 function refreshPortalUiVisibility(){
@@ -5632,8 +5802,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if(portalCfg && portalCfg.url) initPortalSupabase();
 });
 setInterval(()=>{ try{ refreshPortalUiVisibility(); }catch(e){} }, 1500);
-
-const { updateDoc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
 
 /* Live-sync portal settings from Firestore so every device picks them up
    automatically without having to re-enter the credentials. */
