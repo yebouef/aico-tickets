@@ -1480,7 +1480,13 @@
   <section class="view" id="view-sales">
 
     <div class="card">
-      <h2 data-i18n="recordNewSale">Record New Sale</h2>
+      <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap">
+        <div>
+          <h2 id="sale-form-title" data-i18n="recordNewSale">Record New Sale</h2>
+          <div id="sale-form-mode-note" style="display:none;margin-top:6px;font-size:13px;color:var(--accent);font-weight:600"></div>
+        </div>
+        <button type="button" class="btn-secondary" id="cancel-edit-btn" data-i18n="cancelEditSale" style="display:none">Cancel edit</button>
+      </div>
       <form id="sale-form" autocomplete="off">
 
         <div style="margin-bottom:14px;padding:12px;background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px">
@@ -2212,6 +2218,10 @@ const I18N = {
     balanceDue: 'Balance Due',
     clearForm: 'Clear form',
     recordSale: 'Record sale',
+    editSale: 'Edit',
+    updateSale: 'Save correction',
+    cancelEditSale: 'Cancel edit',
+    editingSaleNote: 'Editing sale {id}. Save to correct the transaction and re-sync it to the portal.',
     catAdultMember: 'Adult — AICO Member',
     catAdultNonMember: 'Adult — Non-Member',
     catChildMember: 'Child <18 — Member Family',
@@ -2364,6 +2374,7 @@ const I18N = {
     confirmClearAll2: 'Are you absolutely sure? All active sales data will be voided.',
     alertNoSalesExport: 'No sales to export.',
     toastSaved: 'Sale recorded.',
+    toastUpdated: 'Sale updated.',
     toastSellerAdded: 'Seller added.',
     toastSellerRemoved: 'Seller removed.',
     toastError: 'Something went wrong: ',
@@ -2521,6 +2532,10 @@ const I18N = {
     balanceDue: 'Solde dû',
     clearForm: 'Effacer le formulaire',
     recordSale: 'Enregistrer la vente',
+    editSale: 'Modifier',
+    updateSale: 'Enregistrer la correction',
+    cancelEditSale: 'Annuler la modification',
+    editingSaleNote: 'Modification de la vente {id}. Enregistrez pour corriger la transaction et la resynchroniser vers le portail.',
     catAdultMember: 'Adulte — Membre AICO',
     catAdultNonMember: 'Adulte — Non-membre',
     catChildMember: 'Enfant <18 — Famille membre',
@@ -2673,6 +2688,7 @@ const I18N = {
     confirmClearAll2: 'Êtes-vous absolument sûr ? Toutes les ventes actives seront annulées.',
     alertNoSalesExport: 'Aucune vente à exporter.',
     toastSaved: 'Vente enregistrée.',
+    toastUpdated: 'Vente mise a jour.',
     toastSellerAdded: 'Vendeur ajouté.',
     toastSellerRemoved: 'Vendeur retiré.',
     toastError: 'Une erreur est survenue : ',
@@ -2792,6 +2808,7 @@ let sales = [];
 let sellers = [];
 let comps = []; // complimentary tickets (VIPs / guests)
 let raffleSales = []; // raffle ticket sales
+let editingSaleId = null;
 let inventory = 100;
 let appConfig = {
   publicUrl: '',
@@ -2856,6 +2873,14 @@ function portalPaymentIdForSale(saleId) {
 function actorName() {
   if (!currentUser) return '';
   return currentUser.name || t('adminLabel');
+}
+
+function getEditingSale() {
+  return editingSaleId ? sales.find(s => s.saleId === editingSaleId) || null : null;
+}
+
+function saleTicketCount(sale) {
+  return (sale?.lines || []).reduce((sum, line) => sum + (Number(line.qty) || 0), 0);
 }
 
 function deletedSaleRecord(saleId, sale = {}) {
@@ -3000,6 +3025,7 @@ function attemptLogin() {
 function logout() {
   currentUser = null;
   dashUnlocked = false;
+  editingSaleId = null;
   saveUser();
   if (qrScanner) { try { qrScanner.stop(); } catch (e) {} }
   refreshAuthUI();
@@ -3014,9 +3040,11 @@ function refreshAuthUI() {
     // Always show the tabs row when logged in (so Scanner is always reachable),
     // but hide Sales Entry for admin.
     $('tabs').style.display = 'inline-flex';
-    if (currentUser.role === 'seller') {
+    if (currentUser.role === 'seller' || editingSaleId) {
       $('tab-sales').style.display = '';
-      $('locked-seller').textContent = currentUser.name;
+      $('locked-seller').textContent = editingSaleId
+        ? (getEditingSale()?.seller || currentUser.name || '—')
+        : currentUser.name;
     } else {
       $('tab-sales').style.display = 'none';
     }
@@ -3065,7 +3093,7 @@ function setView(v) {
     return;
   }
   if (!currentUser) { setView('login'); return; }
-  if (currentUser.role === 'admin' && v !== 'dashboard') v = 'dashboard';
+  if (currentUser.role === 'admin' && v !== 'dashboard' && !(v === 'sales' && editingSaleId)) v = 'dashboard';
   if (v === 'dashboard' && currentUser.role === 'seller' && !dashUnlocked) {
     showPwModal();
     return;
@@ -3247,10 +3275,94 @@ function updateFormTotals() {
   balEl.textContent = fmt(balance);
   balEl.className = 'value ' + (balance > 0.001 ? 'balance-due' : balance < -0.001 ? 'balance-paid' : 'balance-zero');
 }
+function syncSaleFormMode() {
+  const isEditing = !!editingSaleId;
+  const title = $('sale-form-title');
+  const note = $('sale-form-mode-note');
+  const cancelBtn = $('cancel-edit-btn');
+  const submitBtn = $('submit-btn');
+  if (title) title.textContent = isEditing ? t('updateSale') : t('recordNewSale');
+  if (submitBtn) submitBtn.textContent = isEditing ? t('updateSale') : t('recordSale');
+  if (cancelBtn) cancelBtn.style.display = isEditing ? 'inline-flex' : 'none';
+  if (!note) return;
+  if (isEditing) {
+    note.style.display = 'block';
+    note.textContent = t('editingSaleNote').replace('{id}', editingSaleId);
+  } else {
+    note.style.display = 'none';
+    note.textContent = '';
+  }
+}
+function setBuyerType(type) {
+  const radio = document.querySelector(`input[name="buyer-type"][value="${type}"]`);
+  if (!radio) return;
+  radio.checked = true;
+  radio.dispatchEvent(new Event('change', { bubbles: true }));
+}
+function guessContactNameParts(fullName) {
+  const parts = String(fullName || '').trim().split(/\s+/).filter(Boolean);
+  return {
+    firstName: parts[0] || '',
+    lastName: parts.slice(1).join(' '),
+  };
+}
+function populateSaleForm(sale) {
+  if (!sale) return;
+  $('locked-date').textContent = formatDate(sale.date || todayISO());
+  $('locked-seller').textContent = sale.seller || actorName() || '—';
+  $('buyer-email').value = sale.buyerEmail || '';
+  $('amount-received').value = Number(sale.received || 0);
+  $('notes').value = sale.notes || '';
+  $('payment-method').value = sale.payment || '';
+  const isOther = sale.payment === 'Other';
+  $('payment-other').style.display = isOther ? 'block' : 'none';
+  $('payment-other').required = isOther;
+  $('payment-other').value = isOther ? (sale.paymentOther || '') : '';
+  $('line-items').innerHTML = '';
+  (sale.lines || []).forEach(line => addLineItem(line.cat, line.qty));
+  if (!sale.lines || sale.lines.length === 0) addLineItem();
+  const buyerInfo = sale.buyerInfo || null;
+  if (buyerInfo?.type === 'contact') {
+    const guess = guessContactNameParts(sale.buyer);
+    setBuyerType('contact');
+    $('buyer-first-name').value = buyerInfo.firstName || guess.firstName;
+    $('buyer-last-name').value = buyerInfo.lastName || guess.lastName;
+    $('buyer-phone').value = buyerInfo.phone || '';
+  } else {
+    setBuyerType('member');
+    const matchedMember = buyerInfo?.memberId
+      ? portalMembers.find(m => m.id === buyerInfo.memberId)
+      : null;
+    $('buyer-member-select').value = matchedMember
+      ? `${matchedMember.last_name || ''}, ${matchedMember.first_name || ''}`
+      : (sale.buyer || '');
+  }
+  syncBuyerName();
+  updateFormTotals();
+}
+function beginSaleEdit(saleId) {
+  const sale = sales.find(s => s.saleId === saleId);
+  if (!sale) {
+    showToast(t('toastError') + 'Sale not found.', true);
+    return;
+  }
+  editingSaleId = sale.saleId;
+  populateSaleForm(sale);
+  syncSaleFormMode();
+  refreshAuthUI();
+  setView('sales');
+}
+function exitSaleEditMode({ reset = true, returnToDashboard = false } = {}) {
+  editingSaleId = null;
+  syncSaleFormMode();
+  refreshAuthUI();
+  if (reset) resetForm();
+  if (returnToDashboard && currentUser) setView('dashboard');
+}
 function resetForm() {
   $('sale-form').reset();
   $('locked-date').textContent = formatDate(todayISO());
-  if (currentUser) $('locked-seller').textContent = currentUser.name;
+  $('locked-seller').textContent = currentUser?.role === 'seller' ? currentUser.name : '—';
   $('line-items').innerHTML = '';
   $('payment-other').style.display = 'none';
   $('payment-other').required = false;
@@ -3262,12 +3374,15 @@ function resetForm() {
   ['buyer-member-select','buyer-first-name','buyer-last-name','buyer-phone','buyer-name'].forEach(id=>{ const el=$(id); if(el) el.value=''; });
   addLineItem();
   updateFormTotals();
+  syncSaleFormMode();
 }
 
 // --- Form submit (writes to Firestore) ---
 $('sale-form').addEventListener('submit', async (e) => {
   e.preventDefault();
-  if (!currentUser || currentUser.role !== 'seller') return;
+  const existingSale = getEditingSale();
+  if (!currentUser) return;
+  if (!existingSale && currentUser.role !== 'seller') return;
   const lines = readFormLines().filter(l => l.cat && l.qty > 0);
   if (lines.length === 0) { alert(t('alertNoLines')); return; }
   const paymentVal = $('payment-method').value;
@@ -3278,14 +3393,17 @@ $('sale-form').addEventListener('submit', async (e) => {
     return;
   }
   const ticketsInSale = lines.reduce((s,l) => s + l.qty, 0);
-  const remaining = inventory - totalSoldCount();
+  const remaining = inventory - totalSoldCount() + saleTicketCount(existingSale);
   if (ticketsInSale > remaining) {
     const msg = t('confirmExceedInv').replace('{x}', ticketsInSale).replace('{y}', remaining);
     if (!confirm(msg)) return;
   }
-  const saleId = uid();
+  const saleId = existingSale ? existingSale.saleId : uid();
   // Pull buyer info from the new picker (member dropdown or non-member fields)
-  const buyerInfo = (typeof getBuyerInfo === 'function') ? getBuyerInfo() : null;
+  let buyerInfo = (typeof getBuyerInfo === 'function') ? getBuyerInfo() : null;
+  if (existingSale && buyerInfo && buyerInfo.type === 'member' && !buyerInfo.memberId && existingSale.buyerInfo?.type === 'member') {
+    buyerInfo = { ...existingSale.buyerInfo, displayName: buyerInfo.displayName || existingSale.buyer };
+  }
   if(buyerInfo){
     if(buyerInfo.type === 'member' && !buyerInfo.memberId){
       alert('Pick a member from the list, or switch to Non-member and enter their info.'); return;
@@ -3297,12 +3415,12 @@ $('sale-form').addEventListener('submit', async (e) => {
   const buyerDisplayName = buyerInfo ? buyerInfo.displayName : ($('buyer-name').value.trim() || 'Unknown');
   const sale = {
     saleId,
-    date: todayISO(),
+    date: existingSale?.date || todayISO(),
     buyer: buyerDisplayName,
     buyerInfo: buyerInfo || null,
     syncedToPortal: false,
     buyerEmail: $('buyer-email').value.trim(),
-    seller: currentUser.name,
+    seller: existingSale?.seller || currentUser.name,
     payment: paymentVal,
     paymentOther: paymentVal === 'Other' ? paymentOtherVal : '',
     received: parseFloat($('amount-received').value) || 0,
@@ -3322,11 +3440,22 @@ $('sale-form').addEventListener('submit', async (e) => {
   try {
     await setDoc(doc(db, 'sales', saleId), {
       ...sale,
-      createdAt: serverTimestamp(),
-    });
-    resetForm();
-    showToast(t('toastSaved'));
-    showPostSaleModal(sale);
+      ...(existingSale ? {
+        updatedAt: serverTimestamp(),
+        updatedBy: actorName(),
+      } : {
+        createdAt: serverTimestamp(),
+      }),
+    }, { merge: !!existingSale });
+    const savedSale = existingSale ? { ...existingSale, ...sale, updatedBy: actorName() } : sale;
+    if (existingSale) {
+      exitSaleEditMode({ reset: true, returnToDashboard: currentUser.role === 'admin' });
+      showToast(t('toastUpdated'));
+    } else {
+      resetForm();
+      showToast(t('toastSaved'));
+      showPostSaleModal(savedSale);
+    }
   } catch (err) {
     showToast(t('toastError') + err.message, true);
   } finally {
@@ -3426,7 +3555,7 @@ function renderLog() {
           <td class="num">${isFirst ? fmt(sale.received) : ''}</td>
           <td class="num ${isFirst ? balCls : ''}">${isFirst ? fmt(sale.balance) : ''}</td>
           <td>${isFirst ? escapeHtml(sale.notes || '') : ''}</td>
-          <td>${isFirst ? `<button class="btn-ghost" data-del="${escapeHtml(sale.saleId)}">${escapeHtml(t('delete'))}</button>` : ''}</td>
+          <td>${isFirst ? `<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn-ghost" data-edit="${escapeHtml(sale.saleId)}">${escapeHtml(t('editSale'))}</button><button class="btn-ghost" data-del="${escapeHtml(sale.saleId)}">${escapeHtml(t('delete'))}</button></div>` : ''}</td>
         `;
         tbody.appendChild(tr);
         visibleCount++;
@@ -3463,6 +3592,9 @@ function renderLog() {
   }
 
   $('empty-state').style.display = visibleCount === 0 ? 'block' : 'none';
+  tbody.querySelectorAll('[data-edit]').forEach(btn => {
+    btn.addEventListener('click', () => beginSaleEdit(btn.getAttribute('data-edit')));
+  });
   tbody.querySelectorAll('[data-del]').forEach(btn => {
     btn.addEventListener('click', async () => {
       const id = btn.getAttribute('data-del');
@@ -3485,7 +3617,12 @@ function renderAll() { renderDashboard(); renderLog(); }
 // --- Wire UI ---
 $('amount-received').addEventListener('input', updateFormTotals);
 $('add-line-btn').addEventListener('click', () => addLineItem());
-$('reset-btn').addEventListener('click', resetForm);
+$('reset-btn').addEventListener('click', () => {
+  const editingSale = getEditingSale();
+  if (editingSale) populateSaleForm(editingSale);
+  else resetForm();
+});
+$('cancel-edit-btn').addEventListener('click', () => exitSaleEditMode({ reset: true, returnToDashboard: currentUser?.role === 'admin' }));
 
 $('payment-method').addEventListener('change', () => {
   const isOther = $('payment-method').value === 'Other';
@@ -5758,12 +5895,12 @@ async function syncToPortal(){
         const paymentId = 'p-tix-' + sale.saleId;
         const linesText = sale.lines.map(l => `${l.qty}×${l.cat}@$${l.unit}`).join(', ');
         const notesText = `Gala ticket sale (seller: ${sale.seller}). Payment: ${sale.payment}${sale.paymentOther?' ('+sale.paymentOther+')':''}. Lines: ${linesText}. Total: $${sale.total.toFixed(2)} · Received: $${sale.received.toFixed(2)}.${sale.buyerEmail?' Buyer email: '+sale.buyerEmail+'.':''}${sale.notes?' Note: '+sale.notes:''}`;
-        const { error: pe } = await sbClient.from('payments').insert({
+        const { error: pe } = await sbClient.from('payments').upsert({
           id: paymentId, member_id: memberId, contact_id: contactId,
           date: sale.date, amount: sale.received, type:'gala',
           event_id: portalCfg.galaEventId, notes: notesText
-        });
-        if(pe && pe.code !== '23505'){ console.warn('payment insert failed', pe); failed++; continue; }
+        }, { onConflict: 'id' });
+        if(pe){ console.warn('payment upsert failed', pe); failed++; continue; }
         await setDoc(doc(db, 'sales', sale.saleId), { syncedToPortal: true }, { merge: true });
         synced++; totalAmount += Number(sale.received||0);
       } catch(e){ console.error('sync error for', sale.saleId, e); failed++; }
