@@ -2044,6 +2044,10 @@
           <option value="unassigned" data-i18n="filterUnassigned">Unassigned only</option>
           <option value="assigned" data-i18n="filterAssigned">Assigned only</option>
         </select>
+        <select id="assign-table-filter">
+          <option value="all" data-i18n="filterAllTables">All tables</option>
+          <option value="unassigned" data-i18n="filterNoTable">No table</option>
+        </select>
       </div>
       <div id="assignments-list"></div>
       <div id="assignments-empty" class="empty" data-i18n="assignEmpty" style="display:none;">No sales to assign yet.</div>
@@ -2448,6 +2452,8 @@ const I18N = {
     filterAll: 'All sales',
     filterUnassigned: 'Unassigned only',
     filterAssigned: 'Assigned only',
+    filterAllTables: 'All tables',
+    filterNoTable: 'No table',
     assignEmpty: 'No sales to assign yet.',
     assignSelectTable: '— No table —',
     assignTableLabel: 'Table',
@@ -2769,6 +2775,8 @@ const I18N = {
     filterAll: 'Toutes les ventes',
     filterUnassigned: 'Non attribuées',
     filterAssigned: 'Attribuées',
+    filterAllTables: 'Toutes les tables',
+    filterNoTable: 'Sans table',
     assignEmpty: 'Aucune vente à attribuer.',
     assignSelectTable: '— Aucune table —',
     assignTableLabel: 'Table',
@@ -4001,6 +4009,7 @@ $('bulk-add-tables-btn').addEventListener('click', bulkAddTables);
 // Table assignments search/filter
 $('assign-search').addEventListener('input', renderTableAssignments);
 $('assign-filter').addEventListener('change', renderTableAssignments);
+$('assign-table-filter').addEventListener('change', renderTableAssignments);
 $('cancel-config-btn').addEventListener('click', () => {
   // Revert visible values back to what's in Firestore (appConfig)
   applyConfigToInputs(); // this also re-locks
@@ -5271,11 +5280,28 @@ async function setCompTable(compId, tableName) {
   }
 }
 
+function refreshAssignTableFilter() {
+  const sel = $('assign-table-filter');
+  if (!sel) return;
+  const current = sel.value || 'all';
+  const tables = appConfig.tables || [];
+  const tableNames = new Set(tables.map(tbl => tbl.name));
+  const opts = [
+    `<option value="all">${escapeHtml(t('filterAllTables'))}</option>`,
+    `<option value="unassigned">${escapeHtml(t('filterNoTable'))}</option>`,
+    ...tables.map(tbl => `<option value="${escapeHtml(tbl.name)}">${escapeHtml(tbl.name)}</option>`),
+  ];
+  sel.innerHTML = opts.join('');
+  sel.value = current === 'unassigned' || current === 'all' || tableNames.has(current) ? current : 'all';
+}
+
 function renderTableAssignments() {
   const wrap = $('assignments-list');
   if (!wrap) return;
   const search = ($('assign-search')?.value || '').trim().toLowerCase();
   const filter = $('assign-filter')?.value || 'all';
+  refreshAssignTableFilter();
+  const tableFilter = $('assign-table-filter')?.value || 'all';
   const tables = appConfig.tables || [];
 
   // Combine sales and comps into one unified list
@@ -5300,6 +5326,8 @@ function renderTableAssignments() {
   if (search) visible = visible.filter(x => `${x.name} ${x.id}`.toLowerCase().includes(search));
   if (filter === 'unassigned') visible = visible.filter(x => !x.tableName);
   if (filter === 'assigned') visible = visible.filter(x => !!x.tableName);
+  if (tableFilter === 'unassigned') visible = visible.filter(x => !x.tableName);
+  else if (tableFilter !== 'all') visible = visible.filter(x => x.tableName === tableFilter);
 
   // Sum seats (guests), not sale records — one buyer can purchase multiple tickets.
   const totalAssigned = combined
