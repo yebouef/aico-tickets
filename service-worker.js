@@ -3,7 +3,7 @@
 // Cross-origin requests (Firebase, CDN libraries) always go straight to network
 // so the SDK and Firestore data stay fresh and Firebase's own offline cache handles outages.
 
-const CACHE_NAME = 'aico-tickets-v1';
+const CACHE_NAME = 'aico-tickets-v2-collapsible-sales';
 const APP_SHELL = [
   './',
   './index.html',
